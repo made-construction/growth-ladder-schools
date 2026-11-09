@@ -292,3 +292,57 @@ table.t select { border: 1px solid #F1D7A6; background: #FFFDF7; border-radius: 
   table.t { font-size: 9.5pt; } table.t th, table.t td { padding: 4px 8px; }
 }
 @media print { .card:has(.chart), .card:has(.gantt) { break-inside: avoid; } h3 { break-after: avoid; } }
+
+/* ---------- القسم 16: الهوية المؤسسية والمراجع البصرية (إضافة) ---------- */
+.id-h4 { margin: 18px 0 10px; font-size: 15px; color: var(--petrol-dark); }
+.id-hero { align-items: center; }
+.id-logo-main { background: #fff; border: 1px solid var(--line-2); border-radius: var(--radius); padding: 28px; display: grid; place-items: center; min-height: 200px; }
+.id-logo-main img { width: 100%; max-width: 420px; }
+.id-logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.id-logo { margin: 0; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; cursor: zoom-in; background: #fff; }
+.id-logo > div { height: 110px; display: grid; place-items: center; padding: 14px; }
+.id-logo img { max-width: 100%; max-height: 82px; }
+.id-logo.dark > div { background: var(--petrol); }
+.id-logo figcaption, .id-fig figcaption { padding: 8px 10px; font-size: 12.5px; font-weight: 700; color: var(--petrol); display: flex; flex-direction: column; gap: 2px; }
+.id-src { font-weight: 300; font-size: 10.5px; color: var(--grey); word-break: break-word; }
+.id-colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.id-sw { border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; background: #fff; }
+.id-chip { height: 76px; padding: 10px 12px; font-size: 12.5px; font-weight: 700; border-bottom: 1px solid var(--line-2); }
+.id-info { padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+.id-info b { font-size: 15px; color: var(--night); }
+.id-ratio { display: flex; height: 42px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line-2); }
+.id-ratio i { display: grid; place-items: center; font-style: normal; font-weight: 700; font-size: 12.5px; color: #fff; }
+.id-weights > div { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; font-size: 30px; color: var(--petrol); border-bottom: 1px dashed var(--line); padding: 6px 0; line-height: 1.5; }
+.id-weights span { font-size: 12px; color: var(--grey); font-weight: 400; font-family: 'Outfit', var(--brand-ar), sans-serif; }
+.id-en { margin: 14px 0 8px; display: flex; flex-direction: column; gap: 2px; }
+.id-en b { font-size: 26px; color: var(--petrol); font-family: 'Outfit', sans-serif; }
+.id-en span { font-size: 12.5px; color: var(--grey); }
+.id-trait { background: var(--mist); border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.id-trait b { color: var(--petrol); font-size: 17px; }
+.id-trait span { font-size: 13px; color: var(--grey); }
+.id-bgs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.id-bg { border-radius: 12px; border: 1px solid var(--line-2); min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 14px; }
+.id-bg img { max-width: 80%; max-height: 64px; }
+.id-bg span { font-size: 12px; font-weight: 700; }
+.id-mock { border-radius: 16px; padding: 22px; min-height: 260px; position: relative; overflow: hidden; }
+.id-mock.post { background: var(--sand); }
+.id-mock.post .ey { color: var(--aqua); font-weight: 700; font-size: 13px; }
+.id-mock.post .wm { height: 54px; margin: 6px 0 10px; display: block; }
+.id-mock.post p { margin: 0; max-width: 70%; color: var(--night); font-size: 14px; }
+.id-mock.post .steps { position: absolute; inset-inline-end: 22px; bottom: 54px; display: flex; align-items: flex-end; gap: 6px; }
+.id-mock.post .steps i { width: 18px; border-radius: 9px 9px 0 0; display: block; }
+.id-mock.post .ft { position: absolute; bottom: 18px; inset-inline-start: 22px; display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--petrol); }
+.id-mock.post .ft img { height: 22px; }
+.id-mock.card2 { background: var(--petrol); color: #DCEBEB; }
+.id-mock.card2 .lg { height: 52px; display: block; }
+.id-mock.card2 .ln { margin-top: 26px; display: flex; flex-direction: column; }
+.id-mock.card2 .ln b { color: #fff; font-size: 18px; } .id-mock.card2 .ln span { font-weight: 300; font-size: 13px; }
+.id-mock.card2 .dots { display: flex; gap: 6px; margin: 14px 0; } .id-mock.card2 .dots i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+.id-mock.card2 p { margin: 0; font-size: 12.5px; font-weight: 300; }
+.id-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.id-gal.small { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.id-gal.wide { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.id-fig { margin: 0; background: #fff; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; cursor: zoom-in; transition: box-shadow .15s; }
+.id-fig:hover { box-shadow: var(--shadow); }
+.id-fig img { width: 100%; display: block; background: var(--mist); }
+@media print { .id-fig, .id-sw, .id-logo, .id-bg, .id-mock { break-inside: avoid; } .id-gal { grid-template-columns: repeat(3, 1fr) !important; } .id-gal.small { grid-template-columns: repeat(6, 1fr) !important; } }
