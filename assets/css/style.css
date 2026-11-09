@@ -359,3 +359,4 @@ table.t select { border: 1px solid #F1D7A6; background: #FFFDF7; border-radius: 
 .pdocs { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 12px; font-size: 13px; align-items: center; }
 .pdocs label { display: inline-flex; gap: 6px; align-items: center; }
 .rl-fail { color: var(--neg); } .rl-treat { color: #9A6312; } .rl-miss { color: var(--grey); } .rl-info { color: #2E6E6E; } .rl-ok { color: var(--pos); }
+.pform .pg { grid-column: 1 / -1; font-weight: 800; color: var(--petrol-dark); background: var(--mist); border-radius: 8px; padding: 6px 10px; margin-top: 4px; font-size: 13px; }
