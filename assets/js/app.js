@@ -70,20 +70,28 @@
     $('#btn-reset').disabled = !n;
   }
   function setInput(key, val) { E.set(key, val); saveState(); rerender(); toast('تم تحديث النتائج'); }
-  function resetAll() { if (!confirm('إعادة جميع المدخلات إلى القيم الأصلية في دراسة v2؟ (لن تُحذف النسخ المحفوظة)')) return; E.reset(); saveState(); rerender(); toast('أُعيدت القيم الأصلية'); }
+  // نوافذ تأكيد وإدخال داخل الصفحة (بدل confirm/prompt التي تمنعها بعض بيئات العرض)
+  function resetAll() {
+    if (!changedCount()) { toast('المدخلات مطابقة للدراسة الأصلية'); return; }
+    modal(`<h3>إعادة القيم الأصلية</h3><p>إعادة جميع المدخلات (${fInt(changedCount())}) إلى القيم الأصلية في دراسة v2؟ لن تُحذف النسخ المحفوظة.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn" data-a="close">إلغاء</button><button class="btn pri" data-a="reset-yes">نعم، أعد القيم الأصلية</button></div>`);
+  }
+  function resetYes() { E.reset(); saveState(); closeModal(); rerender(); toast('أُعيدت القيم الأصلية'); }
 
   const snaps = () => { try { return JSON.parse(localStorage.getItem(SNAPS) || '[]'); } catch (e) { return []; } };
   function snapSave() {
-    const name = prompt('اسم النسخة المحفوظة (مثال: سيناريو رسوم أعلى):', 'نسخة ' + new Date().toLocaleString('ar-SA-u-nu-latn'));
-    if (!name) return;
+    const el = document.getElementById('snap-name');
+    const name = (el && el.value.trim()) || ('نسخة ' + new Date().toLocaleString('ar-SA-u-nu-latn'));
     const list = snaps(); list.unshift({ name, at: new Date().toISOString(), over: E.over, scenario: NM('Scenario') });
-    localStorage.setItem(SNAPS, JSON.stringify(list.slice(0, 30))); toast('حُفظت النسخة في هذا المتصفح'); openSnaps();
+    try { localStorage.setItem(SNAPS, JSON.stringify(list.slice(0, 30))); toast('حُفظت النسخة في هذا المتصفح'); } catch (e) { toast('تعذّر الحفظ في هذا المتصفح'); }
+    openSnaps();
   }
   function openSnaps() {
     const list = snaps();
     modal(`<h3>حفظ التعديلات واستعادتها</h3>
       <div class="note info small">تُحفظ التعديلات <b>محلياً في هذا المتصفح وعلى هذا الجهاز فقط</b> (Local Storage)، ولا تُزامَن تلقائياً بين الأجهزة أو المتصفحات، وتُفقد إذا مُسحت بيانات المتصفح. لنقلها إلى جهاز آخر استخدم «تصدير ملف» ثم «استيراد ملف».</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
+        <input id="snap-name" placeholder="اسم النسخة (مثال: رسوم أعلى 10%)" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:999px;padding:7px 14px">
         <button class="btn pri" data-a="snap-save">حفظ الوضع الحالي كنسخة</button>
         <button class="btn" data-a="export">تصدير ملف (JSON)</button>
         <label class="btn" style="cursor:pointer">استيراد ملف<input type="file" accept=".json,application/json" data-a="import" hidden></label>
@@ -743,6 +751,7 @@
     else if (a === 'inputs') openDrawer();
     else if (a === 'close-drawer') closeDrawer();
     else if (a === 'reset') resetAll();
+    else if (a === 'reset-yes') resetYes();
     else if (a === 'snaps') openSnaps();
     else if (a === 'snap-save') snapSave();
     else if (a === 'export') exportJSON();
