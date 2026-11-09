@@ -342,7 +342,10 @@ table.t select { border: 1px solid #F1D7A6; background: #FFFDF7; border-radius: 
 .id-gal { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 .id-gal.small { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 .id-gal.wide { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.id-gal.big { grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)); }
+.id-gal.hl { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.id-fig img { image-rendering: auto; }
 .id-fig { margin: 0; background: #fff; border: 1px solid var(--line-2); border-radius: 12px; overflow: hidden; cursor: zoom-in; transition: box-shadow .15s; }
 .id-fig:hover { box-shadow: var(--shadow); }
 .id-fig img { width: 100%; display: block; background: var(--mist); }
-@media print { .id-fig, .id-sw, .id-logo, .id-bg, .id-mock { break-inside: avoid; } .id-gal { grid-template-columns: repeat(3, 1fr) !important; } .id-gal.small { grid-template-columns: repeat(6, 1fr) !important; } }
+@media print { .id-fig, .id-sw, .id-logo, .id-bg, .id-mock { break-inside: avoid; } .id-gal { grid-template-columns: repeat(3, 1fr) !important; } .id-gal.small, .id-gal.hl { grid-template-columns: repeat(6, 1fr) !important; } .id-gal.big { grid-template-columns: 1fr !important; } }

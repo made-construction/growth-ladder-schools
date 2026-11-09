@@ -771,14 +771,16 @@
       <div style="height:16px"></div>
 
       <div class="card"><h3>6. دليل الهوية البصرية</h3><p class="sub">صفحات الدليل الرسمي (9 صفحات) – اضغط على الصفحة للتكبير</p>
-        ${gal(GUIDE.map(([n, c]) => fig(n, c, '06_دليل_الهوية/' + n + '.png')))}</div>
+        ${gal(GUIDE.map(([n, c]) => fig(n, c, '06_دليل_الهوية/' + n + '.png')), 'wide')}</div>
       <div style="height:16px"></div>
 
       <div class="card"><h3>7. الصور والمراجع البصرية – الحسابات الرقمية</h3>
         <div class="note" style="margin:6px 0 14px"><b>تنبيه مهم:</b> بحسب حزمة الهوية نفسها، <b>المعرّفات (@) مقترحة ويجب حجزها والتحقق من توفرها، والحسابات لم تُنشأ بعد</b>، ولا يوجد حتى الآن موقع إلكتروني رسمي منشور للمدارس. لذلك لا توجد صور منشورة فعلياً على حسابات رسمية يمكن الاستشهاد بها أو الربط بأصلها. الصور أدناه هي <b>التصاميم الرسمية المعتمدة للحسابات</b> من حزمة الهوية، وتُستبدل بروابط الحسابات الفعلية وصورها بعد إنشائها والترخيص.</div>
-        ${gal(DIG.map(([n, c]) => fig(n, c, '03_الحسابات_الرقمية/' + n + '.png')))}
+        ${gal(DIG.slice(0, 2).map(([n, c]) => fig(n, c, '03_الحسابات_الرقمية/' + n + '.png')), 'big')}
+        <div style="height:14px"></div>
+        ${gal(DIG.slice(2).map(([n, c]) => fig(n, c, '03_الحسابات_الرقمية/' + n + '.png')))}
         <h4 class="id-h4">أغلفة Highlights لإنستغرام</h4>
-        ${gal(HL.map((c, i) => fig('highlight_0' + (i + 1), c, '03_الحسابات_الرقمية/instagram_highlights/highlight_0' + (i + 1) + '.png')), 'small')}
+        ${gal(HL.map((c, i) => fig('highlight_0' + (i + 1), c, '03_الحسابات_الرقمية/instagram_highlights/highlight_0' + (i + 1) + '.png')), 'hl')}
         <div class="tbl-wrap" style="margin-top:14px"><table class="t"><thead><tr><th>المنصة</th><th>المعرّف المقترح</th><th>الحالة</th></tr></thead><tbody>
           <tr><td>Instagram</td><td class="en">growthladder.schools</td><td><span class="tag c-ver">مقترح – يحتاج حجزاً وتحققاً</span></td></tr>
           <tr><td>X</td><td class="en">@growthladder</td><td><span class="tag c-ver">مقترح – يحتاج حجزاً وتحققاً</span></td></tr>
