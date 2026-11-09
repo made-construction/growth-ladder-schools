@@ -264,6 +264,45 @@ class Ctx:
         return self.sheets.index(name)
 
 
+def style_class(c):
+    """يحوّل تنسيق الخلية في Excel إلى صنف CSS دلالي في الموقع."""
+    try:
+        fill = (c.fill.fgColor.rgb or '')[-6:] if c.fill and c.fill.fill_type else ''
+        fc = (c.font.color.rgb or '')[-6:] if c.font and c.font.color and isinstance(c.font.color.rgb, str) else ''
+        b = bool(c.font.b)
+        sz = c.font.sz or 10
+    except Exception:
+        return ''
+    cls = []
+    if fill == '1F3864':
+        cls.append('t' if sz >= 14 else 'h')
+    elif fill == '2E4A7D':
+        cls.append('sec')
+    elif fill == 'F2F2F2':
+        cls.append('tot')
+    elif fill == 'FFF2CC':
+        cls.append('in' if fc == '0000FF' else 'hl')
+    elif fill == 'FCE4D6':
+        cls.append('warn')
+    elif fill == 'E2EFDA':
+        cls.append('ok')
+    elif fill == 'DDEBF7':
+        cls.append('info')
+    elif fill:
+        cls.append('sw-' + fill)
+    if fc == '008000':
+        cls.append('lnk')
+    elif fc == '0563C1':
+        cls.append('url')
+    elif fc == '595959':
+        cls.append('mut')
+    elif fc == 'C00000':
+        cls.append('red')
+    if b and not any(x in cls for x in ('t', 'h', 'sec')):
+        cls.append('b')
+    return ' '.join(cls)
+
+
 def is_input(c):
     try:
         fc = (c.font.color.rgb or '') if c.font and c.font.color else ''
@@ -276,7 +315,7 @@ def is_input(c):
 def main(src, dst):
     wb = openpyxl.load_workbook(src)
     ctx = Ctx(wb)
-    V, F, FX, INP, NF, NFS, DIMS = {}, {}, {}, {}, {}, [], []
+    V, F, FX, INP, NF, NFS, DIMS, ST, URL = {}, {}, {}, {}, {}, [], [], {}, {}
     nfi = {}
     errors = []
     for si, ws in enumerate(wb):
@@ -301,6 +340,11 @@ def main(src, dst):
                 if v is None:
                     continue
                 k = "%d!%s" % (si, c.coordinate)
+                sc = style_class(c)
+                if sc:
+                    ST[k] = sc
+                if c.hyperlink is not None and c.hyperlink.target:
+                    URL[k] = c.hyperlink.target
                 fmt = c.number_format or 'General'
                 if fmt != 'General':
                     if fmt not in nfi:
@@ -338,6 +382,8 @@ def main(src, dst):
         f.write('nfs:%s,\n' % json.dumps(NFS, ensure_ascii=False))
         f.write('nf:%s,\n' % json.dumps(NF, ensure_ascii=False))
         f.write('inp:%s,\n' % json.dumps(INP, ensure_ascii=False))
+        f.write('st:%s,\n' % json.dumps(ST, ensure_ascii=False))
+        f.write('url:%s,\n' % json.dumps(URL, ensure_ascii=False))
         f.write('v:%s,\n' % json.dumps(V, ensure_ascii=False))
         f.write('fx:%s,\n' % json.dumps(FX, ensure_ascii=False))
         f.write('f:{\n')
