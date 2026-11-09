@@ -163,24 +163,6 @@
     return lit.replace(core, s).replace(/\u0001/g, '');
   }
 
-  /* IRR / NPV */
-  function npv(rate, flows) { let s = 0; flows.forEach((c, i) => { s += c / Math.pow(1 + rate, i + 1); }); return s; }
-  /* IRR بأسلوب Excel: نيوتن من التخمين، 20 تكراراً، وإلا #NUM! */
-  function irr(flows, guess) {
-    const f = r => flows.reduce((s, c, i) => s + c / Math.pow(1 + r, i), 0);
-    const df = r => flows.reduce((s, c, i) => s - i * c / Math.pow(1 + r, i + 1), 0);
-    let r = guess === undefined ? 0.1 : guess;
-    for (let k = 0; k < 20; k++) {
-      const y = f(r), d = df(r);
-      if (!isFinite(y) || !isFinite(d) || d === 0) return NUM;
-      const nr = r - y / d;
-      if (!isFinite(nr) || nr <= -1) return NUM;
-      if (Math.abs(nr - r) < 1e-7) return nr;
-      r = nr;
-    }
-    return NUM;
-  }
-
   /* ---------- الدوال ---------- */
   const $ = {
     add: arith((a, b) => a + b), sub: arith((a, b) => a - b), mul: arith((a, b) => a * b),
@@ -234,8 +216,6 @@
       for (let k = 0; k < L.length; k++) { const v = L[k]; if (v === null) continue; const c = cmp(v, x); if (t > 0 ? c <= 0 : c >= 0) best = k; else break; }
       return best < 0 ? NA : best + 1;
     },
-    NPV(rate, ...a) { rate = num(scalar(rate)); if (isErr(rate)) return rate; const n = nums(a); if (isErr(n)) return n; return npv(rate, n); },
-    IRR(r, g) { const n = nums([r]); if (isErr(n)) return n; return irr(n, g === undefined ? undefined : num(scalar(g))); },
 
     DATE(y, m, d) { y = num(scalar(y)); m = num(scalar(m)); d = num(scalar(d)); return fromYMD(y, m, d); },
     YEAR(s) { s = num(scalar(s)); return isErr(s) ? s : toDate(s).getUTCFullYear(); },

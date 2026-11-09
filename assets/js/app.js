@@ -6,8 +6,8 @@
   'use strict';
   const M = window.GL_MODEL, G = window.GLEngine, CH = window.GLCharts;
   const E = new G.Engine(M);
-  const STORE = 'gl-study-v2';           // حالة العمل الحالية
-  const SNAPS = 'gl-study-v2-snapshots'; // النسخ المحفوظة بأسماء
+  const STORE = 'gl-study-v3-nonfin';     // حالة العمل الحالية (النسخة غير المالية)
+  const SNAPS = 'gl-study-v3-nonfin-snapshots'; // النسخ المحفوظة بأسماء
 
   /* ================= أدوات عامة ================= */
   const $ = (s, r = document) => r.querySelector(s);
@@ -27,8 +27,6 @@
   const nf1 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
   const nf2 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 });
   const fInt = v => isNum(v) ? nf0.format(Math.round(v)) : esc(v);
-  const fSAR = v => isNum(v) ? nf0.format(Math.round(v)) + ' ر.س' : esc(v);
-  const fM = v => isNum(v) ? nf2.format(v / 1e6) + ' مليون' : esc(v);
   const fPct = (v, d = 1) => isNum(v) ? (d ? nf1 : nf0).format(v * 100) + '%' : esc(v);
   // يعزل الأرقام فقط باتجاه LTR ويترك الكلمات العربية في سياقها
   const numSpan = s => String(s).replace(/-?\d[\d,.]*%?/g, m => `<span class="num">${m}</span>`);
@@ -82,7 +80,7 @@
   function snapSave() {
     const el = document.getElementById('snap-name');
     const name = (el && el.value.trim()) || ('نسخة ' + new Date().toLocaleString('ar-SA-u-nu-latn'));
-    const list = snaps(); list.unshift({ name, at: new Date().toISOString(), over: E.over, scenario: NM('Scenario') });
+    const list = snaps(); list.unshift({ name, at: new Date().toISOString(), over: E.over });
     try { localStorage.setItem(SNAPS, JSON.stringify(list.slice(0, 30))); toast('حُفظت النسخة في هذا المتصفح'); } catch (e) { toast('تعذّر الحفظ في هذا المتصفح'); }
     openSnaps();
   }
@@ -91,16 +89,16 @@
     modal(`<h3>حفظ التعديلات واستعادتها</h3>
       <div class="note info small">تُحفظ التعديلات <b>محلياً في هذا المتصفح وعلى هذا الجهاز فقط</b> (Local Storage)، ولا تُزامَن تلقائياً بين الأجهزة أو المتصفحات، وتُفقد إذا مُسحت بيانات المتصفح. لنقلها إلى جهاز آخر استخدم «تصدير ملف» ثم «استيراد ملف».</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0">
-        <input id="snap-name" placeholder="اسم النسخة (مثال: رسوم أعلى 10%)" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:999px;padding:7px 14px">
+        <input id="snap-name" placeholder="اسم النسخة (مثال: طاقة 450 طالباً)" style="flex:1;min-width:200px;border:1px solid var(--line);border-radius:999px;padding:7px 14px">
         <button class="btn pri" data-a="snap-save">حفظ الوضع الحالي كنسخة</button>
         <button class="btn" data-a="export">تصدير ملف (JSON)</button>
         <label class="btn" style="cursor:pointer">استيراد ملف<input type="file" accept=".json,application/json" data-a="import" hidden></label>
       </div>
-      ${list.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>النسخة</th><th>التاريخ</th><th>المدخلات المعدلة</th><th></th></tr></thead><tbody>${list.map((s, i) => `<tr><td><b>${esc(s.name)}</b><div class="small muted">السيناريو: ${esc(s.scenario || '')}</div></td><td class="small">${esc(new Date(s.at).toLocaleString('ar-SA-u-nu-latn'))}</td><td class="n">${Object.keys(s.over || {}).length}</td><td style="white-space:nowrap"><button class="btn" data-a="snap-load" data-i="${i}">استعادة</button> <button class="btn" data-a="snap-del" data-i="${i}">حذف</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted small">لا توجد نسخ محفوظة بعد.</p>'}
+      ${list.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>النسخة</th><th>التاريخ</th><th>المدخلات المعدلة</th><th></th></tr></thead><tbody>${list.map((s, i) => `<tr><td><b>${esc(s.name)}</b></td><td class="small">${esc(new Date(s.at).toLocaleString('ar-SA-u-nu-latn'))}</td><td class="n">${Object.keys(s.over || {}).length}</td><td style="white-space:nowrap"><button class="btn" data-a="snap-load" data-i="${i}">استعادة</button> <button class="btn" data-a="snap-del" data-i="${i}">حذف</button></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted small">لا توجد نسخ محفوظة بعد.</p>'}
       <div style="margin-top:14px;text-align:left"><button class="btn" data-a="close">إغلاق</button></div>`);
   }
   function exportJSON() {
-    const data = { app: 'growth-ladder-study', source: M.source, exported: new Date().toISOString(), scenario: NM('Scenario'), over: E.over,
+    const data = { app: 'growth-ladder-study', source: M.source, exported: new Date().toISOString(), over: E.over,
       labels: Object.fromEntries(Object.keys(E.over).map(k => [k, labelOf(k)])) };
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
     a.download = 'سلم_النمو_مدخلات_' + new Date().toISOString().slice(0, 10) + '.json'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -228,30 +226,15 @@
   }
   const yrRow = (code, r, cols = YC) => cols.map(c => N(code, c + r));
 
-  /* ================= المؤشرات المالية الرئيسية ================= */
+  /* ================= المؤشرات الفنية الرئيسية (غير مالية) ================= */
   function core() {
-    const L = a => V('17', a);
     return {
-      scenario: NM('Scenario'),
-      invest: L('L7'), capex: L('L8'), conWorks: NM('CON_SUB'), boq: NM('CAPEX_TOTAL'),
-      st1: L('E9'), st5: L('L9'), occ5: L('L10'),
-      rev1: L('L11'), rev5: L('L12'), cashExp5: L('L13'), np1: L('L14'), np5: L('L15'), npAvg: L('L16'), ebitda5: L('L17'),
-      roi: L('L18'), npv: L('L20'), npvNoTV: L('L21'), irr: L('L22'), irrNoTV: L('L23'), payback: L('L25'),
-      be5: L('L26'), beOcc5: L('L27'), be1: L('L28'), feeNeeded: L('L30'),
       capProp: NM('Cap_Proposed'), capTheory: NM('Cap_Theory'), capLand: NM('Cap_Land'), capOff: NM('Cap_Official'), capBus: NM('Cap_Bus'),
-      classes: NM('Classrooms_Avail'), kgRooms: NM('KG_Rooms'), primRooms: NM('Prim_Rooms'),
+      classes: NM('Classrooms_Avail'), kgRooms: NM('KG_Rooms'), primRooms: NM('Prim_Rooms'), maxSeats: NM('Max_Seats'),
       busReq: NM('Bus_Req'), busDrawn: NM('Bus_Drawn'), parkReq: NM('Parking_Req'), parkProv: NM('Parking_Prov'),
-      critOpen: NM('Crit_Open'), discRate: NM('Disc_Rate'),
+      critOpen: NM('Crit_Open'),
     };
   }
-  const yearly = () => ({
-    seats: yrRow('17', 8), students: yrRow('17', 9), occ: yrRow('17', 7), fee: yrRow('17', 10),
-    gross: yrRow('17', 11), disc: yrRow('17', 12), exempt: yrRow('17', 13), tuition: yrRow('17', 14), other: yrRow('17', 15), revenue: yrRow('17', 16),
-    salTeach: yrRow('17', 17), varEdu: yrRow('17', 18), direct: yrRow('17', 19), gross_profit: yrRow('17', 20), salAdm: yrRow('17', 21), opexFixed: yrRow('17', 22), badDebt: yrRow('17', 23),
-    preop: yrRow('17', 24, ['D', ...YC]), ebitda: yrRow('17', 25), dep: yrRow('17', 26), ebit: yrRow('17', 27), ebt: yrRow('17', 28), tax: yrRow('17', 32), zakat: yrRow('17', 33), net: yrRow('17', 34),
-    capexY: yrRow('17', 35, ['D', ...YC]), wc: yrRow('17', 37, ['D', ...YC]), fcf: yrRow('17', 38, ['D', ...YC]), cum: yrRow('17', 39, ['D', ...YC]), tv: yrRow('17', 40, ['D', ...YC]), fcfTV: yrRow('17', 41, ['D', ...YC]),
-    be: yrRow('17', 44), beOcc: yrRow('17', 45),
-  });
 
   /* ================= الصفحات ================= */
   const PAGES = [
@@ -259,14 +242,8 @@
     { id: 'summary', t: 'الملخص التنفيذي', r: pSummary },
     { id: 'market', t: 'دراسة السوق والطلب', r: pMarket },
     { id: 'engineering', t: 'الدراسة الفنية والهندسية', r: pEngineering },
+    { id: 'property', t: 'معايير اختيار وتقييم المبنى المدرسي المستأجر', r: pProperty },
     { id: 'capacity', t: 'الطاقة الاستيعابية', r: pCapacity },
-    { id: 'capex', t: 'تكاليف الإنشاء والتجهيز', r: pCapex },
-    { id: 'opex', t: 'المصاريف التشغيلية', r: pOpex },
-    { id: 'revenue', t: 'الإيرادات المتوقعة', r: pRevenue },
-    { id: 'cashflow', t: 'التدفقات النقدية', r: pCashflow },
-    { id: 'pnl', t: 'الأرباح والخسائر', r: pPnl },
-    { id: 'breakeven', t: 'نقطة التعادل', r: pBreakeven },
-    { id: 'returns', t: 'العائد على الاستثمار', r: pReturns },
     { id: 'timeline', t: 'الجدول الزمني للتنفيذ', r: pTimeline },
     { id: 'risks', t: 'المخاطر والافتراضات', r: pRisks },
     { id: 'refs', t: 'المراجع والاعتمادات', r: pRefs },
@@ -274,83 +251,59 @@
   ];
 
   const head = (eyebrow, title, desc) => `<div class="ph"><div class="eyebrow">${esc(eyebrow)}</div><h1>${esc(title)}</h1>${desc ? `<p>${desc}</p>` : ''}</div>`;
-  const scenarioNote = () => `<span class="pill" style="background:var(--sand);color:#8A5A10">السيناريو النشط: ${esc(NM('Scenario'))}</span>`;
   const chartBox = (id, title, sub, cls = '') => `<div class="card ${cls}"><h3>${esc(title)}</h3>${sub ? `<p class="sub">${sub}</p>` : ''}<div id="${id}"></div></div>`;
   const after = []; // رسوم تُرسم بعد إدراج HTML
   const draw = (id, fn) => after.push(() => { const el = document.getElementById(id); if (el) fn(el); });
 
-  function verdictBox(c) {
-    const bad = isNum(c.npv) && c.npv < 0;
-    const t = V('01', 'B29');
-    return `<div class="verdict ${bad ? 'bad' : 'good'}"><div class="ic">${bad ? '!' : '✓'}</div><div>
-      <h4>${bad ? 'الحكم المبدئي: غير مجدٍ مالياً بصيغته الحالية' : 'الحكم المبدئي: مؤشرات إيجابية في السيناريو النشط'} <span class="small muted">(السيناريو ${esc(c.scenario)})</span></h4>
-      <p>${esc(t)}</p></div></div>`;
+  /* وضع المشروع بعد اعتماد خيار المبنى المستأجر (بيانات المستثمر المعتمدة – نوفمبر 2026) */
+  function statusBox() {
+    return `<div class="verdict mid"><div class="ic">!</div><div>
+      <h4>وضع المشروع: مرحلة اختيار المبنى المستأجر وتقييمه</h4>
+      <p>المعتمد الآن: مدرسة أهلية بمنهج وطني في الرياض (تمهيدي + ابتدائي) بتصنيف «مجمع تعليمي»، في <b>مبنى قائم يُستأجر ويُؤهَّل</b>، ولا توجد نية لبناء مبنى جديد. الدراسة الهندسية السابقة (مبنى جديد على أرض 50×50م) تبقى <b>مرجعاً</b> للبرنامج الوظيفي والطاقة والمتطلبات. الخطوة التالية: تقييم العقارات المرشحة في قسم «معايير اختيار وتقييم المبنى المدرسي المستأجر» بعد التحقق من الاشتراطات السارية.</p>
+      <p style="margin-top:8px"><a class="btn pri no-print" href="#property">تقييم العقارات المرشحة ←</a></p></div></div>`;
   }
+  const refBanner = (what) => `<div class="note" style="margin-bottom:14px"><b>مرجعي – خيار سابق:</b> ${what} أُعدّ لخيار <b>مبنى جديد على أرض 50×50م</b>، وهو خيار لم يعد معتمداً بعد قرار استئجار مبنى قائم. يُعرض مرجعاً للبرنامج الوظيفي والمتطلبات فقط. قيم الاشتراطات المذكورة من سجل الدراسة v2 ولم يُتحقق منها من النص الرسمي الكامل الساري.</div>`;
 
   /* ---------- 1) الرئيسية ---------- */
   function pHome() {
-    const c = core(), y = yearly();
-    const bus = c.busDrawn < c.busReq;
-    draw('ch-home-fin', el => CH.combo(el, { cats: YRS, series: [
-      { name: 'الإيرادات', values: y.revenue, color: CH.C.petrol },
-      { name: 'المصروفات النقدية', values: YC.map((_, i) => -(y.direct[i] + y.salAdm[i] + y.opexFixed[i] + y.badDebt[i])), color: CH.C.aqua },
-      { name: 'صافي الربح', type: 'line', values: y.net, color: CH.C.saffron }], tipFmt: fSAR }));
-    draw('ch-home-cum', el => CH.combo(el, { cats: ['التأسيس', ...YRS], series: [
-      { name: 'التدفق النقدي الحر', values: y.fcf, color: CH.C.aqua, negColor: '#D9A49B' },
-      { name: 'التدفق التراكمي', type: 'line', values: y.cum, color: CH.C.neg }], tipFmt: fSAR }));
+    const c = core(), bus = c.busDrawn < c.busReq, P = propsSummary();
     draw('ch-home-cap', el => CH.hbars(el, { items: [
       { label: 'حسب الفصول (التصميمية)', value: c.capTheory, color: CH.C.petrol },
       { label: 'حسب مساحة الأرض', value: c.capLand, color: CH.C.aqua },
-      { label: 'مقاعد خطة التشغيل', value: NM('Max_Seats'), color: '#8FBFBF' },
+      { label: 'مقاعد خطة التشغيل', value: c.maxSeats, color: '#8FBFBF' },
       { label: 'تخدمه الحافلات المرسومة', value: c.capBus, color: CH.C.neg },
       { label: 'الطاقة المقترحة', value: c.capProp, color: CH.C.saffron }], fmt: fInt, labelW: 200 }));
-    draw('ch-home-st', el => CH.combo(el, { cats: YRS, series: [
-      { name: 'المقاعد المتاحة', values: y.seats, color: '#CFE2E2' },
-      { name: 'الطلاب المتوقعون', values: y.students, color: CH.C.petrol },
-      { name: 'طلاب التعادل', type: 'line', values: y.be, color: CH.C.neg, dash: true }], fmt: fInt, tipFmt: v => fInt(v) + ' طالب' }));
+    draw('ch-home-seats', el => CH.combo(el, { cats: YRS, stacked: true, series: [
+      { name: 'مقاعد التمهيدي', values: yrRow('23', 26), color: CH.C.saffron }, { name: 'مقاعد الابتدائي', values: yrRow('23', 27), color: CH.C.petrol }], fmt: fInt, tipFmt: v => fInt(v) + ' مقعد' }));
     return `
-    <div class="hero"><div class="eyebrow">دراسة الجدوى الفنية والهندسية والمالية · الإصدار v2</div>
+    <div class="hero"><div class="eyebrow">الدراسة الفنية والهندسية · خيار المبنى المستأجر</div>
       <h1>مدارس سُلّم النمو <span class="en" style="font-weight:400;opacity:.8;font-size:.6em">Growth Ladder Schools</span></h1>
-      <p>مدرسة أهلية بالمنهج الوطني في الرياض: تمهيدي وابتدائي (الصفوف 1–6)، بقسمين منفصلين للبنين والبنات، على أرض مملوكة للمستثمر بمساحة تقديرية ${fInt(NM('Land_Area'))} م²، ومبنى جديد من ${fInt(NM('Floors'))} أدوار مع قبو مواقف.</p>
-      <div class="meta"><span class="pill">نرتقي بالعلم، وننمو بالمستقبل</span><span class="pill">السيناريو النشط: ${esc(c.scenario)}</span><span class="pill">${fInt(c.classes)} فصلاً</span><span class="pill">افتتاح متوقع ${esc(fmtCell(NM('Opening_Date'), 'mm/yyyy'))}</span></div></div>
-    ${verdictBox(c)}
+      <p>مدرسة أهلية بالمنهج الوطني في الرياض: تمهيدي وابتدائي (الصفوف 1–6)، بقسمين منفصلين للبنين والبنات، بتصنيف «مجمع تعليمي»، في مبنى قائم سيتم استئجاره وتحويله إلى مدرسة.</p>
+      <div class="meta"><span class="pill">نرتقي بالعلم، وننمو بالمستقبل</span><span class="pill">مجمع تعليمي</span><span class="pill">مبنى قائم مستأجر</span><span class="pill">الرياض</span></div></div>
+    ${statusBox()}
     <div style="height:16px"></div>
     <div class="grid g4">
-      ${kpi({ label: 'إجمالي تكلفة المشروع', value: numSpan(fM(c.invest)), unit: 'ر.س', foot: 'إنشاء وتجهيز + ما قبل التشغيل + رأس مال عامل (بدون الأرض)', key: K('17', 'L7') })}
-      ${kpi({ label: 'تكاليف الإنشاء والتجهيز', value: numSpan(fM(c.capex)), unit: 'ر.س', foot: `أعمال الإنشاء والتنفيذ ${numSpan(fM(c.conWorks))} · مسعّر بعروض فعلية ${numSpan(fPct(NM('Quote_Pct'), 0))}`, key: K('17', 'L8') })}
-      ${kpi({ label: 'الطاقة الاستيعابية المقترحة', value: numSpan(fInt(c.capProp)), unit: 'طالب', foot: `تصميمية ${numSpan(fInt(c.capTheory))} · حسب الأرض ${numSpan(fInt(c.capLand))} · المعتمدة: ${c.capOff === null || c.capOff === '' ? 'لم تصدر' : fInt(c.capOff)}`, key: 'Cap_Proposed', tone: 'acc' })}
-      ${kpi({ label: 'عدد الفصول', value: numSpan(fInt(c.classes)), unit: 'فصل', foot: `تمهيدي ${numSpan(fInt(c.kgRooms))} + ابتدائي ${numSpan(fInt(c.primRooms))}`, key: 'Classrooms_Avail' })}
-      ${kpi({ label: 'عدد الطلاب المتوقع', value: numSpan(fInt(c.st5)), unit: 'طالب (س5)', foot: `السنة 1: ${numSpan(fInt(c.st1))} طالب · إشغال س5 ${numSpan(fPct(c.occ5, 0))}`, key: K('17', 'L9'), bar: c.occ5 })}
-      ${kpi({ label: 'الإيرادات السنوية (السنة 5)', value: numSpan(fM(c.rev5)), unit: 'ر.س', foot: `السنة 1: ${numSpan(fM(c.rev1))}`, key: K('17', 'L12') })}
-      ${kpi({ label: 'المصاريف التشغيلية النقدية (س5)', value: numSpan(fM(c.cashExp5)), unit: 'ر.س', foot: 'رواتب + تكاليف تعليمية + مصروفات ثابتة + مخصص التعثر', key: K('17', 'L13') })}
-      ${kpi({ label: 'صافي الأرباح (السنة 5)', value: numSpan(fM(c.np5)), unit: 'ر.س', foot: `السنة 1: ${numSpan(fM(c.np1))} · المتوسط ${numSpan(fM(c.npAvg))}`, key: K('17', 'L15'), tone: c.np5 < 0 ? 'neg' : 'pos' })}
-      ${kpi({ label: 'نقطة التعادل (السنة 5)', value: numSpan(fInt(c.be5)), unit: 'طالب', foot: `إشغال ${numSpan(fPct(c.beOcc5, 0))} · أو رسوم ≈ ${numSpan(fSAR(c.feeNeeded))} للطالب`, key: K('17', 'L26'), tone: c.be5 > c.st5 ? 'neg' : 'pos' })}
-      ${kpi({ label: 'العائد على الاستثمار', value: numSpan(fPct(c.roi)), unit: 'ROI', foot: `NPV (${fPct(c.discRate, 0)}): ${numSpan(fM(c.npv))} · IRR: ${isNum(c.irr) ? numSpan(fPct(c.irr)) : esc(c.irr)}`, key: K('17', 'L18'), tone: c.roi < 0 ? 'neg' : 'pos' })}
-      ${kpi({ label: 'فترة استرداد رأس المال', value: isNum(c.payback) ? numSpan(nf1.format(c.payback)) : `<span style="font-size:20px">${esc(c.payback)}</span>`, unit: isNum(c.payback) ? 'سنة' : '', foot: 'من التدفق النقدي التراكمي دون القيمة المتبقية', key: K('17', 'L25'), tone: isNum(c.payback) ? 'pos' : 'neg' })}
-      ${kpi({ label: 'البنود الحرجة المفتوحة', value: numSpan(fInt(c.critOpen)), unit: 'بند', foot: bus ? `أهمها عجز مواقف الحافلات: المرسوم ${fInt(c.busDrawn)} من ${fInt(c.busReq)} مطلوبة` : 'ورقة 01أ', key: 'Crit_Open', tone: 'neg' })}
+      ${kpi({ label: 'العقارات المقيّمة', value: numSpan(fInt(P.n)), unit: 'عقار', foot: P.n ? `مناسب مبدئياً ${numSpan(fInt(P.ok))} · يحتاج معالجة ${numSpan(fInt(P.treat))} · غير مناسب ${numSpan(fInt(P.fail))} · غير مكتمل ${numSpan(fInt(P.miss))}` : 'لم يُضف أي عقار بعد – <a href="#property">أضف عقاراً</a>', tone: 'acc' })}
+      ${kpi({ label: 'الطاقة الاستيعابية المقترحة (المرجعية)', value: numSpan(fInt(c.capProp)), unit: 'طالب', foot: `تصميمية ${numSpan(fInt(c.capTheory))} · حسب الأرض ${numSpan(fInt(c.capLand))} · المعتمدة: ${c.capOff === null || c.capOff === '' ? 'لم تصدر' : fInt(c.capOff)}`, key: 'Cap_Proposed' })}
+      ${kpi({ label: 'عدد الفصول (البرنامج المرجعي)', value: numSpan(fInt(c.classes)), unit: 'فصل', foot: `تمهيدي ${numSpan(fInt(c.kgRooms))} + ابتدائي ${numSpan(fInt(c.primRooms))}`, key: 'Classrooms_Avail' })}
+      ${kpi({ label: 'المقاعد المخططة (السنة 5)', value: numSpan(fInt(c.maxSeats)), unit: 'مقعد', foot: 'من خطة الافتتاح التدريجي (ورقة 23)', key: 'Max_Seats' })}
+      ${kpi({ label: 'مواقف السيارات المطلوبة (المرجعية)', value: numSpan(fInt(c.parkReq)), unit: 'موقف', foot: 'على 22 فصلاً – القيمة المرجعية من سجل v2 غير متحقق منها', key: 'Parking_Req' })}
+      ${kpi({ label: 'مواقف الحافلات المطلوبة (المرجعية)', value: numSpan(fInt(c.busReq)), unit: 'موقف', foot: bus ? `في التصور السابق: المرسوم ${fInt(c.busDrawn)} فقط` : '', key: 'Bus_Req', tone: bus ? 'neg' : '' })}
+      ${kpi({ label: 'البنود الحرجة المفتوحة', value: numSpan(fInt(c.critOpen)), unit: 'بند', foot: 'ورقة 01أ – بعد حذف البندين الماليين', key: 'Crit_Open', tone: 'neg' })}
+      ${kpi({ label: 'التصنيف المعتمد', value: '<span style="font-size:20px">مجمع تعليمي</span>', foot: `نصيب الطالب المستخدم ${numSpan(nf2.format(N('11', 'C7')))} م² – يحتاج تحقق`, key: 'Land_Basis' })}
     </div>
     <div style="height:16px"></div>
     <div class="grid g2">
-      ${chartBox('ch-home-fin', 'الإيرادات والمصروفات وصافي الربح', 'السنوات الخمس الأولى من التشغيل – ر.س')}
-      ${chartBox('ch-home-cum', 'التدفق النقدي الحر والتراكمي', 'يشمل الاستثمار في سنة التأسيس – ر.س')}
-      ${chartBox('ch-home-st', 'الطلاب المتوقعون مقابل نقطة التعادل', 'الفجوة بين الخط المتقطع والأعمدة الداكنة هي عدد الطلاب الناقص للتعادل المحاسبي')}
-      ${chartBox('ch-home-cap', 'قيود الطاقة الاستيعابية', 'الطاقة المقترحة = أدنى القيود والخطة؛ قيد الحافلات غير مطبق حالياً (عجز غير محلول)')}
+      ${chartBox('ch-home-cap', 'قيود الطاقة الاستيعابية (البرنامج المرجعي)', 'أدنى القيود والخطة؛ تُستبدل بقيم العقار المختار بعد تقييمه')}
+      ${chartBox('ch-home-seats', 'خطة الافتتاح التدريجي – المقاعد', 'المقاعد المتاحة حسب المرحلة لكل سنة (ورقة 23)')}
     </div>
     <div style="height:16px"></div>
     <div class="grid g2">
-      <div class="card"><h3>مقارنة السيناريوهات</h3><p class="sub">تُحسب السيناريوهات الثلاثة بالتوازي بنفس منطق النموذج المالي (ورقة 18)</p>${scenarioTable()}</div>
       <div class="card"><h3>ما يجب حسمه قبل القرار</h3><p class="sub">من ورقة «01أ الملاحظات الحرجة» – ${fInt(c.critOpen)} بنداً مفتوحاً</p>${critList(6)}<p style="margin:10px 0 0"><a href="#risks">عرض كل البنود الحرجة ←</a></p></div>
+      <div class="card"><h3>تقييم العقارات المرشحة</h3><p class="sub">أداة استرشادية لمقارنة المباني المعروضة للإيجار</p>${P.n ? P.table : '<p class="muted small">أضف العقارات المرشحة وبياناتها لتظهر نتيجتها هنا.</p>'}<p style="margin:10px 0 0"><a href="#property">فتح أداة التقييم ←</a></p></div>
     </div>`;
   }
 
-  function scenarioTable() {
-    const mn = v => isNum(v) ? nf2.format(v / 1e6) : esc(v);
-    const rows = [[20, mn, 'إجمالي الاستثمار (مليون ر.س)'], [21, fInt, 'عدد الطلاب – س5'], [23, mn, 'الإيرادات – س5 (مليون ر.س)'], [26, mn, 'صافي الربح – س5 (مليون ر.س)'], [28, fPct, 'العائد على الاستثمار ROI'], [29, fInt, 'طلاب التعادل – س5'], [31, mn, 'NPV (مليون ر.س)'], [32, v => isNum(v) ? fPct(v) : esc(v), 'IRR']];
-    const act = NM('Scenario');
-    return `<div class="tbl-wrap"><table class="t"><thead><tr><th>المؤشر</th>${['متحفظ', 'متوسط', 'متفائل'].map(s => `<th class="n"${s === act ? ' style="background:var(--saffron);color:var(--night)"' : ''}>${s}</th>`).join('')}</tr></thead><tbody>
-      ${rows.map(([r, f, l]) => `<tr><td>${l}</td>${['C', 'D', 'E'].map(cc => { const v = V('18', cc + r); return `<td class="n${isNum(v) && v < 0 ? ' neg' : ''}">${f(v)}</td>`; }).join('')}</tr>`).join('')}
-    </tbody></table></div>`;
-  }
   function critRows() {
     const si = SHEET['01أ'], out = [];
     for (let r = 5; r <= M.dims[si].r; r++) { const n = V('01أ', 'B' + r), t = V('01أ', 'C' + r); if (isNum(n) && t) out.push({ n, t, now: V('01أ', 'D' + r), imp: V('01أ', 'E' + r), doc: V('01أ', 'F' + r), who: V('01أ', 'G' + r), own: V('01أ', 'H' + r), st: V('01أ', 'I' + r), r }); }
@@ -364,21 +317,16 @@
   function pSummary() {
     const si = SHEET['01'], items = [];
     for (let r = 3; r <= M.dims[si].r; r += 2) { const h = V('01', 'B' + r), t = V('01', 'B' + (r + 1)); if (h && t) items.push([h, t]); }
-    return head('القسم 2', 'الملخص التنفيذي', 'نص الملخص مرتبط بالنموذج ويتحدث تلقائياً مع السيناريو والمدخلات.') + verdictBox(core()) + `<div style="height:16px"></div>
+    return head('القسم 2', 'الملخص التنفيذي', 'نص الملخص مرتبط بالنموذج ويتحدث تلقائياً مع المدخلات.') + statusBox() + `<div style="height:16px"></div>
       <div class="grid g2">${items.map(([h, t]) => `<div class="card"><h3>${esc(h)}</h3><p style="margin:0">${esc(t)}</p></div>`).join('')}</div>
-      <div style="height:16px"></div><div class="stack">${sheetBlock('02', { title: 'التعريف بالمشروع (ورقة 02)', open: true })}${sheetBlock('00', { title: 'لوحة المستثمر الهندسية (ورقة 00)', to: 42 })}${sheetBlock('16', { title: 'لوحة الجدوى المالية (ورقة 16)' })}</div>`;
+      <div style="height:16px"></div><div class="stack">${sheetBlock('02', { title: 'التعريف بالمشروع (ورقة 02)', open: true })}${sheetBlock('00', { title: 'لوحة المستثمر الهندسية (ورقة 00)', to: 42 })}</div>`;
   }
 
   /* ---------- 3) السوق ---------- */
   function pMarket() {
-    const si = SHEET['25'], comp = [];
-    for (let r = 5; r <= M.dims[si].r; r++) { const nm = V('25', 'B' + r), g1 = V('25', 'H' + r), kg = V('25', 'G' + r); if (nm && (isNum(g1) || isNum(kg))) comp.push({ nm: String(nm), g1, kg }); }
-    const ourFee = yearly().fee[0];
-    draw('ch-mkt', el => CH.hbars(el, { items: [...comp.filter(c => isNum(c.g1)).map(c => ({ label: c.nm.length > 34 ? c.nm.slice(0, 33) + '…' : c.nm, value: c.g1, color: CH.C.aqua })), { label: 'سُلّم النمو – متوسط الرسوم (س1)', value: ourFee, color: CH.C.saffron }].sort((a, b) => b.value - a.value), fmt: fInt, tipFmt: fSAR, labelW: 250 }));
-    return head('القسم 3', 'دراسة السوق والطلب', 'تحليل المنافسين والرسوم في الرياض. <b>تحليل مؤقت على مستوى المدينة</b> لأن الحي لم يُحدد بعد؛ يُحدَّث بعد تحديد موقع الأرض.') +
-      `<div class="note" style="margin-bottom:16px">بيانات المنافسين من مصادر عامة (مواقع المدارس وأدلة المدارس) بتاريخ الاطلاع المذكور، وموثوقيتها موضحة في الجدول. الرسوم المعلنة قد تختلف عن الفعلية بعد الخصومات.</div>
-      <div class="grid g2">${chartBox('ch-mkt', 'رسوم الصف الأول لدى المنافسين مقابل متوسط رسوم المشروع', 'ر.س سنوياً – متوسط رسوم المشروع من ورقة الإيرادات (قبل الخصم، السيناريو النشط)', 'span2')}</div>
-      <div style="height:16px"></div><div class="stack">${sheetBlock('25', { title: 'السوق والمنافسون (ورقة 25)', open: true })}${sheetBlock('26', { title: 'خطة التسويق (ورقة 26)' })}${sheetBlock('27', { title: 'الهوية التجارية (ورقة 27)' })}</div>`;
+    return head('القسم 3', 'دراسة السوق والطلب', 'المدارس المنافسة وتحليل الطلب في الرياض. <b>تحليل مؤقت على مستوى المدينة</b> لأن الحي لم يُحدد بعد؛ يُحدَّث بعد تحديد العقار المختار.') +
+      `<div class="note" style="margin-bottom:16px">بيانات المنافسين من مصادر عامة (مواقع المدارس وأدلة المدارس) بتاريخ الاطلاع المذكور، وموثوقيتها موضحة في الجدول. بيانات الرسوم حُذفت من هذه النسخة غير المالية.</div>
+      <div class="stack">${sheetBlock('25', { title: 'السوق والمنافسون (ورقة 25)', open: true })}${sheetBlock('26', { title: 'خطة التسويق (ورقة 26)' })}${sheetBlock('27', { title: 'الهوية التجارية (ورقة 27)' })}</div>`;
   }
 
   /* ---------- 4) الهندسية ---------- */
@@ -388,7 +336,7 @@
     const tabs = [['04', 'الأرض والموقع'], ['05', 'الاشتراطات النظامية'], ['06', 'البرنامج الوظيفي'], ['07', 'التصور المعماري'], ['08', 'الإنشائية'], ['09', 'الكهروميكانيكية'], ['10', 'السلامة والوصول'], ['30', 'مراجعة المكتب الهندسي']];
     const c = core();
     const changed = changedCount() > 0;
-    return head('القسم 4', 'الدراسة الفنية والهندسية', 'الأرض والاشتراطات والبرنامج الوظيفي والأنظمة والسلامة، مع اللوحات التصورية v2 المطابقة لملف Excel. <b>تصورات أولية وليست مخططات تنفيذية أو معتمدة.</b>') +
+    return head('القسم 4', 'الدراسة الفنية والهندسية', 'الأرض والاشتراطات والبرنامج الوظيفي والأنظمة والسلامة، مع اللوحات التصورية v2 المطابقة لملف Excel. <b>تصورات أولية وليست مخططات تنفيذية أو معتمدة.</b>') + refBanner('هذا القسم (الأرض والبرنامج والتصور المعماري والإنشائي والأنظمة واللوحات)') +
       (changed ? `<div class="note" style="margin-bottom:14px">⚠ عدّلت مدخلات في هذه الجلسة. اللوحات مرسومة على المدخلات الافتراضية (أرض 50×50م، 3 أدوار…) ولا تتحدث تلقائياً؛ الجداول والأرقام هي التي تتحدث.</div>` : '') +
       `<div class="grid g4">
         ${kpi({ label: 'مساحة الأرض', value: numSpan(fInt(NM('Land_Area'))), unit: 'م²', foot: classTag('تقديرية – تحتاج صك وكروكي'), key: 'Land_Area' })}
@@ -411,155 +359,24 @@
 
   /* ---------- 5) الطاقة ---------- */
   function pCapacity() {
-    const c = core(), y = yearly();
+    const c = core();
     draw('ch-cap', el => CH.hbars(el, { items: [
       { label: '(1) حسب الفصول المتاحة', value: c.capTheory, color: CH.C.petrol }, { label: '(2) حسب مساحة الأرض', value: c.capLand, color: CH.C.aqua },
       { label: 'مقاعد الخطة (س5)', value: NM('Max_Seats'), color: '#8FBFBF' }, { label: 'تخدمه الحافلات المرسومة', value: c.capBus, color: CH.C.neg },
       { label: 'الطاقة المقترحة', value: c.capProp, color: CH.C.saffron }], fmt: fInt, labelW: 200 }));
     draw('ch-cap-y', el => CH.combo(el, { cats: YRS, stacked: true, series: [
-      { name: 'مقاعد التمهيدي', values: yrRow('23', 26), color: CH.C.saffron }, { name: 'مقاعد الابتدائي', values: yrRow('23', 27), color: CH.C.petrol },
-      { name: 'الطلاب المتوقعون', type: 'line', values: y.students, color: CH.C.night }], fmt: fInt, tipFmt: v => fInt(v) }));
-    return head('القسم 5', 'الطاقة الاستيعابية', 'الطاقة النظرية والمقترحة والمعتمدة رسمياً معروضة منفصلة. <b>الطاقة الرسمية تحددها وزارة التعليم في الترخيص ولم تصدر بعد.</b>') +
-      `<div class="grid g4">
+      { name: 'مقاعد التمهيدي', values: yrRow('23', 26), color: CH.C.saffron }, { name: 'مقاعد الابتدائي', values: yrRow('23', 27), color: CH.C.petrol }], fmt: fInt, tipFmt: v => fInt(v) }));
+    return head('القسم 5', 'الطاقة الاستيعابية', 'الطاقة النظرية والمقترحة والمعتمدة رسمياً معروضة منفصلة. <b>الطاقة الرسمية تحددها وزارة التعليم في الترخيص ولم تصدر بعد.</b>') + refBanner('حساب الطاقة في هذا القسم') +
+      `<div class="note info" style="margin-bottom:14px"><b>التصنيف المعتمد: مجمع تعليمي.</b> نصيب الطالب المستخدم ${nf2.format(N('11', 'C7'))} م² من سجل v2 (غير متحقق منه؛ الخبر الرسمي يذكر حتى 5 م² للمجمعات). ويذكر سجل v2 أن تعريف المجمع يستثني الحضانة ورياض الأطفال – يحتاج تأكيد الأمانة. طاقة العقار المستأجر تُحسب لكل عقار في أداة التقييم.</div>
+      <div class="grid g4">
         ${kpi({ label: 'الطاقة التصميمية', value: numSpan(fInt(c.capTheory)), unit: 'طالب', foot: 'الفصول × سعة الفصل ' + classTag('افتراض'), key: 'Cap_Theory' })}
         ${kpi({ label: 'الطاقة حسب الأرض', value: numSpan(fInt(c.capLand)), unit: 'طالب', foot: `${nf2.format(N('11', 'C7'))} م²/طالب (${esc(NM('Land_Basis'))}) ${classTag('اشتراط رسمي')}`, key: 'Cap_Land' })}
         ${kpi({ label: 'الطاقة المقترحة', value: numSpan(fInt(c.capProp)), unit: 'طالب', foot: 'أدنى القيود والخطة', key: 'Cap_Proposed', tone: 'acc' })}
         ${kpi({ label: 'الطاقة المعتمدة رسمياً', value: c.capOff === null || c.capOff === '' ? '<span style="font-size:20px">لم تصدر</span>' : numSpan(fInt(c.capOff)), foot: classTag('يحتاج اعتماد وزارة التعليم'), key: 'Cap_Official' })}
       </div><div style="height:16px"></div>
       <div class="note bad" style="margin-bottom:16px"><b>قيد الحافلات غير المحلول:</b> المواقف المرسومة (${fInt(c.busDrawn)} من ${fInt(c.busReq)}) تخدم نحو ${fInt(c.capBus)} طالباً فقط. القيد غير مطبق على الطاقة المقترحة حالياً (خيار «تطبيق قيد الحافلات» = ${esc(NM('Bus_Cap_Apply'))} في الافتراضات)، ويحتاج قراراً معتمداً.</div>
-      <div class="grid g2">${chartBox('ch-cap', 'القيود الحاكمة للطاقة', 'طالب')}${chartBox('ch-cap-y', 'خطة الافتتاح التدريجي', 'المقاعد المتاحة حسب المرحلة والطلاب المتوقعون في السيناريو النشط')}</div>
+      <div class="grid g2">${chartBox('ch-cap', 'القيود الحاكمة للطاقة', 'طالب')}${chartBox('ch-cap-y', 'خطة الافتتاح التدريجي', 'المقاعد المتاحة حسب المرحلة لكل سنة')}</div>
       <div style="height:16px"></div><div class="stack">${sheetBlock('11', { title: 'حاسبة الطاقة الاستيعابية (ورقة 11)', open: true })}${sheetBlock('23', { title: 'النموذج التعليمي وخطة الافتتاح (ورقة 23)' })}</div>`;
-  }
-
-  /* ---------- 6) تكاليف الإنشاء ---------- */
-  function pCapex() {
-    const groups = []; for (let r = 94; r <= 109; r++) { const l = V('13', 'B' + r), v = N('13', 'C' + r); if (l && isNum(v)) groups.push({ label: l, value: v }); }
-    const cats = []; for (let r = 114; r <= 117; r++) cats.push({ label: V('13', 'B' + r), value: N('13', 'C' + r) });
-    draw('ch-capex-g', el => CH.hbars(el, { items: groups.slice().sort((a, b) => b.value - a.value).map((g, i) => ({ ...g, color: i < 3 ? CH.C.petrol : CH.C.aqua })), fmt: v => nf2.format(v / 1e6) + ' م', tipFmt: fSAR, labelW: 210 }));
-    draw('ch-capex-c', el => CH.donut(el, { items: cats, fmt: fSAR, center: [nf2.format(NM('CAPEX_TOTAL') / 1e6), 'مليون ر.س'] }));
-    return head('القسم 6', 'تكاليف الإنشاء والتجهيز', 'جدول كميات تقديري مرتبط بالمسطحات وحسابات الإنشاء والأنظمة. <b>الأسعار تقديرات أولية للسوق السعودي 2026 وليست عروض أسعار.</b> أدخل سعر العرض الفعلي في عمود «سعر العرض» ليحل محل التقدير تلقائياً.') +
-      `<div class="grid g4">
-        ${kpi({ label: 'أعمال الإنشاء والتنفيذ', value: numSpan(fM(NM('CON_SUB'))), unit: 'ر.س', foot: `${numSpan(fInt(N('13', 'C119')))} ر.س/م² مبني شامل القبو`, key: 'CON_SUB' })}
-        ${kpi({ label: 'إجمالي جدول الكميات', value: numSpan(fM(NM('CAPEX_TOTAL'))), unit: 'ر.س', foot: 'شامل الدراسات والتجهيز وما قبل التشغيل والاحتياطي', key: 'CAPEX_TOTAL' })}
-        ${kpi({ label: 'تكلفة التأسيس لكل مقعد', value: numSpan(fInt(N('13', 'C120'))), unit: 'ر.س', foot: 'حسب الطاقة المقترحة', key: K('13', 'C120') })}
-        ${kpi({ label: 'المسعّر بعروض فعلية', value: numSpan(fPct(NM('Quote_Pct'), 0)), foot: '<span class="tag c-ver">التكلفة تقديرية بالكامل</span>', key: 'Quote_Pct', tone: 'neg' })}
-      </div><div style="height:16px"></div>
-      <div class="grid g2">${chartBox('ch-capex-g', 'التكاليف حسب مجموعات الأعمال', 'مليون ر.س')}${chartBox('ch-capex-c', 'التوزيع حسب فئة الإهلاك', 'يغذي النموذج المالي')}</div>
-      <div style="height:16px"></div><div class="stack">${sheetBlock('13', { title: 'جدول الكميات والتكاليف BOQ (ورقة 13)', open: true })}${sheetBlock('08', { title: 'الدراسة الإنشائية (ورقة 08)' })}${sheetBlock('09', { title: 'الأنظمة الكهروميكانيكية (ورقة 09)' })}</div>`;
-  }
-
-  /* ---------- 7) المصاريف التشغيلية ---------- */
-  function pOpex() {
-    const y = yearly();
-    const neg = a => a.map(v => -v);
-    draw('ch-opex', el => CH.combo(el, { cats: YRS, stacked: true, series: [
-      { name: 'رواتب الكادر التعليمي', values: neg(y.salTeach), color: CH.C.petrol }, { name: 'رواتب الإدارة والإشراف والمساندة', values: neg(y.salAdm), color: CH.C.aqua },
-      { name: 'تكاليف تعليمية متغيرة', values: neg(y.varEdu), color: CH.C.saffron }, { name: 'مصروفات تشغيلية ثابتة', values: neg(y.opexFixed), color: CH.C.dark },
-      { name: 'مخصص التعثر', values: neg(y.badDebt), color: '#9AAAAE' }], tipFmt: fSAR }));
-    const hc = yrRow('24', 29, ['E', 'F', 'G', 'H', 'I']);
-    const sal5 = -(y.salTeach[4] + y.salAdm[4]), tot5 = -(y.direct[4] + y.salAdm[4] + y.opexFixed[4] + y.badDebt[4]);
-    return head('القسم 7', 'المصاريف التشغيلية', 'الرواتب من ورقة الموارد البشرية (مرتبطة بعدد الفصول المفتوحة)، والمصروفات الثابتة والمتغيرة من ورقة OPEX. <b>الرواتب افتراضات استرشادية وليست عروض سوق.</b>') +
-      `<div class="grid g4">
-        ${kpi({ label: 'المصروفات النقدية – السنة 5', value: numSpan(fM(tot5)), unit: 'ر.س', key: K('17', 'L13') })}
-        ${kpi({ label: 'الرواتب والمزايا – السنة 5', value: numSpan(fM(sal5)), unit: 'ر.س', foot: `${numSpan(fPct(sal5 / tot5, 0))} من المصروفات النقدية`, key: K('17', 'I17') })}
-        ${kpi({ label: 'عدد الموظفين', value: numSpan(fInt(hc[0])) + ' ← ' + numSpan(fInt(hc[4])), unit: 'س1 ← س5', key: K('24', 'I29') })}
-        ${kpi({ label: 'نسبة الطلاب إلى المعلمين', value: esc(fmtCell(V('24', 'I36'), E.fmt(K('24', 'I36')))), unit: 'س5', key: K('24', 'I36') })}
-      </div><div style="height:16px"></div>
-      <div class="grid g2">${chartBox('ch-opex', 'هيكل المصروفات التشغيلية النقدية', 'ر.س سنوياً – السيناريو النشط', 'span2')}</div>
-      <div style="height:16px"></div><div class="stack">${sheetBlock('22', { title: 'المصروفات التشغيلية OPEX (ورقة 22)', open: true })}${sheetBlock('24', { title: 'الهيكل التنظيمي والموارد البشرية (ورقة 24)' })}</div>`;
-  }
-
-  /* ---------- 8) الإيرادات ---------- */
-  function pRevenue() {
-    const y = yearly();
-    draw('ch-rev', el => CH.combo(el, { cats: YRS, stacked: true, series: [
-      { name: 'صافي الرسوم الدراسية', values: y.tuition, color: CH.C.petrol }, { name: 'إيرادات أخرى', values: y.other, color: CH.C.saffron },
-      { name: 'الرسوم قبل الخصم', type: 'line', values: y.gross, color: CH.C.aqua, dash: true }], tipFmt: fSAR }));
-    draw('ch-rev-st', el => CH.combo(el, { cats: YRS, series: [{ name: 'متوسط الرسوم الإجمالية للطالب', values: y.fee, color: CH.C.aqua }], fmt: fInt, tipFmt: fSAR, legend: false }));
-    return head('القسم 8', 'الإيرادات المتوقعة', 'الرسوم السنوية لكل صف وقسم قابلة للتعديل (قبل ضريبة القيمة المضافة). <b>الرسوم المقترحة ليست معتمدة نظامياً.</b> الإيراد = الطلاب × متوسط الرسوم − الخصومات والإعفاءات + الإيرادات الأخرى.') +
-      `<div class="grid g4">
-        ${kpi({ label: 'الإيرادات – السنة 1', value: numSpan(fM(y.revenue[0])), unit: 'ر.س', foot: `${numSpan(fInt(y.students[0]))} طالب`, key: K('17', 'E16') })}
-        ${kpi({ label: 'الإيرادات – السنة 5', value: numSpan(fM(y.revenue[4])), unit: 'ر.س', foot: `${numSpan(fInt(y.students[4]))} طالب`, key: K('17', 'I16') })}
-        ${kpi({ label: 'متوسط الرسوم الإجمالية (س5)', value: numSpan(fInt(y.fee[4])), unit: 'ر.س/طالب', foot: `زيادة سنوية ${numSpan(fPct(NM('Fee_Incr'), 0))} ${classTag('افتراض')}`, key: K('17', 'I10') })}
-        ${kpi({ label: 'الخصومات + الإعفاءات', value: numSpan(fPct(NM('Disc_Pct') + NM('Exempt_Pct'), 0)), unit: 'من الرسوم', foot: `تحصيل ${numSpan(fPct(NM('Collect_Pct'), 0))}`, key: 'Disc_Pct' })}
-      </div><div style="height:16px"></div>
-      <div class="grid g2">${chartBox('ch-rev', 'مكونات الإيرادات', 'ر.س – السيناريو النشط')}${chartBox('ch-rev-st', 'متوسط الرسوم الإجمالية للطالب', 'ر.س – يشمل معامل رسوم السيناريو')}</div>
-      <div style="height:16px"></div><div class="stack">${sheetBlock('21', { title: 'الإيرادات والرسوم الدراسية (ورقة 21)', open: true })}</div>`;
-  }
-
-  /* جدول سنوي من ورقة 17 */
-  function finTable(rows, withY0 = false) {
-    const cols = withY0 ? ['D', ...YC] : YC, hd = withY0 ? ['التأسيس', ...YRS] : YRS;
-    return `<div class="tbl-wrap"><table class="t"><thead><tr><th>البند</th>${hd.map(h => `<th class="n">${h}</th>`).join('')}</tr></thead><tbody>
-      ${rows.map(r => { const tot = M.st[K('17', 'B' + r)] === 'tot' || /tot/.test(M.st[K('17', 'B' + r)] || ''); return `<tr class="${tot ? 'tot' : ''}"><td>${esc(V('17', 'B' + r))}${howBtn(K('17', 'I' + r))}</td>${cols.map(c => { const v = V('17', c + r); const fmt = E.fmt(K('17', c + r)); return `<td class="n${isNum(v) && v < 0 ? ' neg' : ''}">${v === null ? '' : esc(fmtCell(v, fmt === 'General' ? '#,##0;(#,##0);"-"' : fmt))}</td>`; }).join('')}</tr>`; }).join('')}
-    </tbody></table></div>`;
-  }
-
-  /* ---------- 9) التدفقات النقدية ---------- */
-  function pCashflow() {
-    const y = yearly(), c = core();
-    draw('ch-cf', el => CH.combo(el, { cats: ['التأسيس', ...YRS], series: [
-      { name: 'الإنفاق الرأسمالي وما قبل التشغيل ورأس المال العامل', values: ['D', ...YC].map((cc, i) => (y.capexY[i] || 0) + (y.preop[i] || 0) + (y.wc[i] || 0)), color: '#D9A49B' },
-      { name: 'التدفق النقدي الحر', values: y.fcf, color: CH.C.petrol },
-      { name: 'التدفق التراكمي', type: 'line', values: y.cum, color: CH.C.neg }], tipFmt: fSAR }));
-    return head('القسم 9', 'التدفقات النقدية', 'التدفق النقدي منفصل عن قائمة الدخل: الإهلاك غير نقدي، وتكلفة الإنشاء تظهر في التدفق النقدي فقط. <b>المشروع ممول ذاتياً بلا فوائد</b> (يُعدَّل إن وُجد تمويل).') +
-      `<div class="grid g4">
-        ${kpi({ label: 'الاستثمار في سنة التأسيس', value: numSpan(fM(-y.fcf[0])), unit: 'ر.س', key: K('17', 'D38') })}
-        ${kpi({ label: 'التدفق الحر – السنة 5', value: numSpan(fM(y.fcf[5])), unit: 'ر.س', key: K('17', 'I38'), tone: y.fcf[5] < 0 ? 'neg' : 'pos' })}
-        ${kpi({ label: 'التدفق التراكمي – نهاية س5', value: numSpan(fM(y.cum[5])), unit: 'ر.س', key: K('17', 'I39'), tone: y.cum[5] < 0 ? 'neg' : 'pos' })}
-        ${kpi({ label: 'القيمة المتبقية نهاية س5', value: numSpan(fM(y.tv[5])), unit: 'ر.س', foot: `الطريقة: ${esc(NM('TV_Method'))} ${classTag('افتراض')}`, key: K('17', 'I40') })}
-      </div><div style="height:16px"></div>
-      ${chartBox('ch-cf', 'التدفقات النقدية السنوية والتراكمية', 'ر.س')}
-      <div style="height:16px"></div><div class="card"><h3>قائمة التدفق النقدي</h3><p class="sub">من ورقة 17 – السيناريو النشط (${esc(c.scenario)})</p>${finTable([25, 24, 32, 33, 35, 36, 37, 38, 39, 40, 41], true)}</div>`;
-  }
-
-  /* ---------- 10) الأرباح والخسائر ---------- */
-  function pPnl() {
-    const y = yearly();
-    draw('ch-pnl', el => CH.combo(el, { cats: YRS, series: [
-      { name: 'الإيرادات', values: y.revenue, color: CH.C.petrol }, { name: 'EBITDA', values: y.ebitda, color: CH.C.aqua, negColor: '#D9A49B' },
-      { name: 'صافي الربح', type: 'line', values: y.net, color: CH.C.saffron }], tipFmt: fSAR }));
-    draw('ch-margin', el => CH.combo(el, { cats: YRS, series: [{ name: 'هامش صافي الربح', values: y.net.map((v, i) => y.revenue[i] ? v / y.revenue[i] : 0), color: CH.C.neg, negColor: CH.C.neg }], fmt: v => Math.round(v * 100) + '%', tipFmt: v => fPct(v), legend: false }));
-    return head('القسم 10', 'الأرباح والخسائر', 'قائمة الدخل لخمس سنوات للسيناريو النشط، شاملة الإهلاك والزكاة وضريبة الدخل على حصة الشريك الأجنبي مع ترحيل الخسائر. <b>الضريبة والزكاة تقريبية وتحتاج مستشاراً ضريبياً.</b>') +
-      `<div class="grid g2">${chartBox('ch-pnl', 'الإيرادات وEBITDA وصافي الربح', 'ر.س')}${chartBox('ch-margin', 'هامش صافي الربح', '% من الإيرادات')}</div>
-      <div style="height:16px"></div><div class="card"><h3>قائمة الدخل</h3><p class="sub">ورقة 17 – السيناريو النشط (${esc(NM('Scenario'))})</p>${finTable([9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 32, 33, 34])}</div>
-      <div style="height:16px"></div>${sheetBlock('17', { title: 'النموذج المالي الكامل (ورقة 17)', noprint: true })}`;
-  }
-
-  /* ---------- 11) التعادل ---------- */
-  function pBreakeven() {
-    const y = yearly(), c = core();
-    draw('ch-be', el => CH.combo(el, { cats: YRS, series: [
-      { name: 'الطلاب المتوقعون', values: y.students, color: CH.C.petrol }, { name: 'طلاب التعادل', values: y.be, color: '#D9A49B' },
-      { name: 'المقاعد المتاحة', type: 'line', values: y.seats, color: CH.C.aqua, dash: true }], fmt: fInt, tipFmt: v => fInt(v) + ' طالب' }));
-    return head('القسم 11', 'نقطة التعادل', 'التعادل المحاسبي: عدد الطلاب الذي يغطي الرواتب والمصروفات الثابتة والإهلاك بمتوسط صافي الرسوم للطالب.') +
-      `<div class="grid g4">
-        ${kpi({ label: 'طلاب التعادل – السنة 5', value: numSpan(fInt(c.be5)), unit: 'طالب', foot: `المتوقع ${numSpan(fInt(c.st5))} · الفارق ${numSpan(fInt(c.st5 - c.be5))}`, key: K('17', 'L26'), tone: c.be5 > c.st5 ? 'neg' : 'pos' })}
-        ${kpi({ label: 'إشغال التعادل – السنة 5', value: numSpan(fPct(c.beOcc5, 0)), foot: `مقابل إشغال متوقع ${numSpan(fPct(c.occ5, 0))}`, key: K('17', 'L27'), bar: c.beOcc5 })}
-        ${kpi({ label: 'طلاب التعادل – السنة 1', value: numSpan(fInt(c.be1)), unit: 'طالب', foot: `المقاعد المتاحة ${numSpan(fInt(y.seats[0]))}`, key: K('17', 'L28') })}
-        ${kpi({ label: 'الرسوم المطلوبة للتعادل (س5)', value: numSpan(fInt(c.feeNeeded)), unit: 'ر.س/طالب', foot: `مقابل ${numSpan(fInt(y.fee[4]))} في النموذج`, key: K('17', 'L30'), tone: c.feeNeeded > y.fee[4] ? 'neg' : 'pos' })}
-      </div><div style="height:16px"></div>
-      ${chartBox('ch-be', 'الطلاب المتوقعون مقابل طلاب التعادل', 'طالب – السيناريو النشط')}
-      <div style="height:16px"></div><div class="stack">${sheetBlock('20', { title: 'التعادل والعائد (ورقة 20)', open: true })}</div>`;
-  }
-
-  /* ---------- 12) العائد ---------- */
-  function pReturns() {
-    const c = core();
-    const sens = []; for (let r = 16; r <= 21; r++) sens.push({ label: V('19', 'B' + r), value: N('19', 'J' + r) });
-    draw('ch-sens', el => CH.hbars(el, { items: sens.sort((a, b) => a.value - b.value), fmt: v => nf2.format(v / 1e6) + ' م', tipFmt: fSAR, labelW: 200 }));
-    const sc = ['C', 'D', 'E'].map(cc => N('18', cc + 31));
-    draw('ch-scn', el => CH.combo(el, { cats: ['متحفظ', 'متوسط', 'متفائل'], series: [{ name: 'NPV', values: sc, color: CH.C.petrol, negColor: CH.C.neg }, { name: 'صافي الربح س5', values: ['C', 'D', 'E'].map(cc => N('18', cc + 26)), color: CH.C.saffron, negColor: '#F0C98A' }], tipFmt: fSAR }));
-    return head('القسم 12', 'العائد على الاستثمار', `مؤشرات العائد للسيناريو النشط بمعدل خصم ${fPct(c.discRate, 0)}، ومقارنة السيناريوهات، وتحليل الحساسية لكل متغير منفرداً.`) +
-      `<div class="grid g4">
-        ${kpi({ label: 'العائد على الاستثمار ROI', value: numSpan(fPct(c.roi)), foot: 'متوسط صافي الربح السنوي ÷ إجمالي الاستثمار', key: K('17', 'L18'), tone: c.roi < 0 ? 'neg' : 'pos' })}
-        ${kpi({ label: 'صافي القيمة الحالية NPV', value: numSpan(fM(c.npv)), unit: 'ر.س', foot: `مع القيمة المتبقية · بدونها ${numSpan(fM(c.npvNoTV))}`, key: K('17', 'L20'), tone: c.npv < 0 ? 'neg' : 'pos' })}
-        ${kpi({ label: 'معدل العائد الداخلي IRR', value: isNum(c.irr) ? numSpan(fPct(c.irr)) : esc(c.irr), foot: `بدون القيمة المتبقية: ${isNum(c.irrNoTV) ? fPct(c.irrNoTV) : esc(c.irrNoTV)}`, key: K('17', 'L22'), tone: !isNum(c.irr) || c.irr < c.discRate ? 'neg' : 'pos' })}
-        ${kpi({ label: 'فترة الاسترداد', value: isNum(c.payback) ? numSpan(nf1.format(c.payback)) : `<span style="font-size:20px">${esc(c.payback)}</span>`, unit: isNum(c.payback) ? 'سنة' : '', key: K('17', 'L25'), tone: isNum(c.payback) ? 'pos' : 'neg' })}
-      </div><div style="height:16px"></div>
-      <div class="grid g2">${chartBox('ch-scn', 'السيناريوهات الثلاثة', 'NPV وصافي ربح السنة 5 – ر.س')}${chartBox('ch-sens', 'حساسية NPV لكل صدمة', 'التغير في NPV عن الحالة الأساسية – عدّل حجم الصدمات في جدول ورقة 19 أدناه')}</div>
-      <div style="height:16px"></div><div class="card"><h3>مقارنة السيناريوهات</h3><p class="sub">عدّل معاملات كل سيناريو من الجدول الكامل أدناه</p>${scenarioTable()}</div>
-      <div style="height:16px"></div><div class="stack">${sheetBlock('18', { title: 'معاملات السيناريوهات والمقارنة (ورقة 18)', to: 35, open: true })}${sheetBlock('19', { title: 'تحليل الحساسية (ورقة 19)', to: 23, open: true })}${sheetBlock('18', { title: 'حسابات السيناريوهات التفصيلية (ورقة 18)', from: 36, hint: 'كتل الحساب الكاملة لكل سيناريو', noprint: true })}${sheetBlock('19', { title: 'حسابات الحساسية التفصيلية (ورقة 19)', from: 24, hint: 'تعاد حسابات النموذج كاملة لكل صدمة', noprint: true })}</div>`;
   }
 
   /* ---------- 13) الجدول الزمني ---------- */
@@ -574,7 +391,7 @@
       <td class="bar-cell">${Array.from({ length: Math.ceil(maxM / 3) }, (_, i) => `<span class="grid-m" style="inset-inline-start:${pct(i * 3 + 1)}%"></span>`).join('')}<span class="bar" style="inset-inline-start:${pct(a.s)}%;width:${Math.max(1.2, a.d / maxM * 100)}%;background:${col[a.type] || CH.C.grey}" data-tip="${esc(a.t)}<br>الشهر ${fInt(a.s)} → ${fInt(a.e)} (${fInt(a.d)} شهر)" title="الشهر ${a.s} – ${a.e}"></span></td></tr>`).join('')}
       <tr><td></td><td></td><td></td><td class="bar-cell small muted" style="height:20px">${Array.from({ length: Math.ceil(maxM / 3) + 1 }, (_, i) => `<span style="position:absolute;inset-inline-start:${pct(i * 3 + 1)}%;top:2px;font-size:10.5px">ش${i * 3 + 1}</span>`).join('')}</td></tr></tbody></table>
       <div class="lgd chart" style="margin-top:6px"><div class="lgd">${Object.entries(col).map(([k, c]) => `<span><i style="background:${c}"></i>${k}</span>`).join('')}</div></div></div>`;
-    return head('القسم 13', 'الجدول الزمني للتنفيذ', 'شهر البداية يُحسب تلقائياً من النشاط السابق وفترة التداخل. <b>المدد تقديرية وليست ضماناً لمواعيد الجهات.</b>') +
+    return head('القسم 13', 'الجدول الزمني للتنفيذ', 'شهر البداية يُحسب تلقائياً من النشاط السابق وفترة التداخل. <b>المدد تقديرية وليست ضماناً لمواعيد الجهات.</b>') + refBanner('هذا الجدول الزمني (التصميم والإنشاء ومدته)') +
       `<div class="grid g4">
         ${kpi({ label: 'مدة المشروع الكلية', value: numSpan(fInt(NM('Exec_Months'))), unit: 'شهر', key: 'Exec_Months' })}
         ${kpi({ label: 'مدة الإنشاء', value: numSpan(fInt(NM('Constr_Months'))), unit: 'شهر', key: 'Constr_Months' })}
@@ -622,7 +439,9 @@
   /* ---------- 15) المراجع ---------- */
   function pRefs() {
     return head('القسم 15', 'المراجع والاعتمادات', 'المرجع النظامي المعتمد، والمصادر، والمستندات والاعتمادات المطلوبة، وتقرير المراجعة وسجل التعديلات. <b>لا يدّعي الموقع أي اعتماد رسمي أو هندسي غير صادر.</b>') +
-      `<div class="grid g2">
+      `${regStatusCard()}
+      <div style="height:16px"></div>
+      <div class="grid g2">
         <div class="card"><h3>المرجع النظامي المعتمد</h3><ul class="list">
           <li><b>اشتراطات المباني التعليمية الخاصة 1447هـ</b> – وزارة البلديات والإسكان، قرار وزاري رقم 4600425374/1 بتاريخ 1447-06-13 (ساري). <a href="https://momah.gov.sa/sites/default/files/2025-12/alnskht%20alm%60tmdt%20lashtratat%20almbany%20alt%60lymyt.pdf" target="_blank" rel="noopener">الوثيقة الرسمية</a></li>
           <li><b>كود البناء السعودي 2024</b> – إلزامي منذ 30 يونيو 2025.</li>
@@ -632,7 +451,6 @@
           <table class="t"><tbody>
           <tr><td>اكتمال المستندات (ورقة 28)</td><td class="n">${fPct(NM('Docs_Pct'), 0)}</td></tr>
           <tr><td>اكتمال التراخيص والاعتمادات (ورقة 14)</td><td class="n">${fPct(NM('Lic_Pct'), 0)}</td></tr>
-          <tr><td>البنود المسعّرة بعروض فعلية</td><td class="n">${fPct(NM('Quote_Pct'), 0)}</td></tr>
           <tr><td>البنود الحرجة المفتوحة (ورقة 01أ)</td><td class="n">${fInt(NM('Crit_Open'))}</td></tr>
           <tr><td>الطاقة المعتمدة من وزارة التعليم</td><td>${NM('Cap_Official') === null || NM('Cap_Official') === '' ? 'لم تصدر' : fInt(NM('Cap_Official'))}</td></tr>
           <tr><td>الاشتراطات: مطابق / غير مطابق / يحتاج تحقق</td><td class="n">${fInt(NM('Reg_OK'))} / ${fInt(NM('Reg_NO'))} / ${fInt(NM('Reg_TBC'))}</td></tr>
@@ -650,13 +468,14 @@
       <li>المواقف وفق الجدول الرسمي: 38 سيارة و8 حافلات على 22 فصلاً (بدل 60 و7).</li>
       <li>خزان الحريق: 113 م³ (مواقف القبو خطر عادي – NFPA 13) بدل 31 م³.</li>
       <li>منحدر القبو: 28م في الشريط الشرقي بدل 9م غير قابل للتنفيذ.</li>
-      <li>توحيد مساحات Excel مع المخططات (14 بنداً متطابقاً) وتصحيح ازدواجات جدول الكميات وإضافة البنود الناقصة.</li>
+      <li>توحيد مساحات Excel مع المخططات (14 بنداً متطابقاً).</li>
       <li>تصحيح فحص نقاط التجمع، وشرط الرشاشات على منطقة الحريق، والمستودع 100 م² حداً أدنى.</li></ul></div>
       <div><h4 style="margin:0 0 6px;color:var(--petrol)">القرارات التي وافق عليها المستثمر</h4><ol class="list small">
       <li>اعتماد 4.70 م² للطالب (متوسط المراحل)، و4.80 «مجمع تعليمي» بديلاً متحفظاً.</li>
       <li>حساب المواقف والحافلات على فصول التصميم (22).</li>
       <li>إبقاء القبو بعد إعادة تحجيمه (32 م²/موقف) ونقل المنحدر للشريط الشرقي.</li>
       <li>أسوار مصمتة بارتفاع 2.40م لقسم البنات.</li></ol>
+      <div class="note small" style="margin-top:10px">تحديث نوفمبر 2026: اعتمد المستثمر استئجار مبنى قائم وتصنيف «مجمع تعليمي»، فالقراران 1 و3 يخصان خيار المبنى الجديد السابق.</div>
       <div class="note bad small" style="margin-top:10px"><b>بند مفتوح أهم:</b> عجز مواقف الحافلات (${fInt(NM('Bus_Drawn'))} من ${fInt(NM('Bus_Req'))}). الحلول: موافقة على مواقف خارج الموقع أو جدولة، قبو حافلات أعمق، ضم أرض مجاورة، أو خفض الفصول.</div></div></div>`;
   }
 
@@ -806,6 +625,239 @@
       <div class="note small"><b>بنود قائمة من الحزمة:</b> الاسم والشعار يحتاجان فحصاً لدى وزارة التجارة والهيئة السعودية للملكية الفكرية · المعرّفات (@) مقترحة · نصوص المنشورات صياغات مقترحة · منشورا التسجيل والقبول بعد الترخيص.</div>`;
   }
 
+  /* ================= 5) معايير اختيار وتقييم المبنى المدرسي المستأجر (قسم جديد) =================
+   * أداة استرشادية: لا تُعد موافقة أو ترخيصاً. القيم المرجعية التنظيمية منقولة من سجل الاشتراطات في الدراسة v2
+   * (ورقة 05) وهي غير متحقق منها من النص الرسمي الساري؛ يمكن تعديلها وتعليمها «تم التحقق» بعد مراجعة النص. */
+  const PROP_KEY = 'gl-properties-v1', REF_KEY = 'gl-property-refs-v1';
+  const CAT = {
+    reg: ['c-ver', 'اشتراط نظامي – بانتظار التحقق من النص الساري'],
+    lic: ['c-inv', 'متطلب ترخيص وتشغيل'],
+    eng: ['c-as', 'معيار هندسي وفني استرشادي'],
+    unv: ['c-neg', 'لم يُتحقق منه'],
+  };
+  const catTag = k => `<span class="tag ${CAT[k][0]}">${CAT[k][1]}</span>`;
+  /* القيم المرجعية الافتراضية – المصدر لكل قيمة مذكور، ولا شيء منها مُعلَّم «متحقق منه» */
+  const REF_DEFAULT = {
+    streetsMin: { v: 2, l: 'أقل عدد للشوارع المحيطة', u: 'شارع', src: 'خبر واس 21/12/2025 + سجل الاشتراطات v2 (ورقة 05)' },
+    streetWidthMin: { v: 25, l: 'أقل عرض لأعرض شارع', u: 'م', src: 'خبر واس 21/12/2025 + سجل الاشتراطات v2' },
+    lpsComplex: { v: 4.8, l: 'نصيب الطالب من الأرض – مجمع تعليمي', u: 'م²/طالب', src: 'سجل v2 جدول 3 الفئة (أ) – يتعارض مع الخبر الرسمي «حتى 5 م² للمجمعات»' },
+    parkKGper: { v: 3, l: 'رياض الأطفال: موقف واحد لكل … فصول', u: 'فصل', src: 'سجل v2 جدول المواقف الفئة (أ)' },
+    parkPrim: { v: 2, l: 'الابتدائي: مواقف لكل فصل', u: 'موقف/فصل', src: 'سجل v2 جدول المواقف الفئة (أ)' },
+    parkInter: { v: 2, l: 'المتوسط: مواقف لكل فصل', u: 'موقف/فصل', src: 'سجل v2 جدول المواقف الفئة (أ)' },
+    busPer: { v: 3, l: 'موقف حافلة لكل … فصول', u: 'فصل', src: 'سجل v2 (جميع الفئات)' },
+    floorsMax: { v: 4, l: 'أقصى عدد أدوار تعليمية (أرضي + 3) للابتدائي والمتوسط والمجمع', u: 'دور', src: 'سجل v2 (جدول 4) – الخبر: «حسب كود البناء المعتمد»' },
+    kgClass: { v: null, l: 'سعة فصل التمهيدي (افتراض الدراسة)', u: 'طفل', src: 'افتراض تصميمي من ورقة 03 – ليس اشتراطاً', name: 'KG_ClassSize' },
+    primClass: { v: null, l: 'سعة فصل الابتدائي (افتراض الدراسة)', u: 'طالب', src: 'افتراض تصميمي من ورقة 03 – ليس اشتراطاً', name: 'Prim_ClassSize' },
+    interClass: { v: null, l: 'سعة فصل المتوسط', u: 'طالب', src: 'لا توجد قيمة في الدراسة – أدخلها إن وُجدت مرحلة متوسطة' },
+  };
+  const ls = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k) || 'null'); return v == null ? d : v; } catch (e) { return d; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { toast('تعذّر الحفظ في هذا المتصفح'); } };
+  const PROP = {
+    list: () => ls(PROP_KEY, []),
+    save: l => lsSet(PROP_KEY, l),
+    refs() { const o = ls(REF_KEY, {}); const r = {}; for (const [k, d] of Object.entries(REF_DEFAULT)) { const def = d.name ? NM(d.name) : d.v; r[k] = { ...d, v: o[k] && o[k].v !== undefined ? o[k].v : def, ok: !!(o[k] && o[k].ok) }; } return r; },
+    saveRef(k, patch) { const o = ls(REF_KEY, {}); o[k] = { ...(o[k] || {}), ...patch }; lsSet(REF_KEY, o); },
+  };
+  const DOCS = [['deed', 'صك الملكية / وثيقة العقار'], ['permit', 'رخصة البناء'], ['plan', 'الكروكي / المخطط المعتمد واستعمال الأرض'], ['completion', 'شهادة إتمام البناء'], ['structural', 'تقرير سلامة إنشائية من مكتب معتمد'], ['civil', 'تقرير أو شهادة الدفاع المدني'], ['asbuilt', 'مخططات المبنى القائم (As-built)'], ['lease', 'مسودة عقد الإيجار ومدته']];
+  const FIELDS = [
+    ['name', 'اسم العقار / الوصف', 'text'], ['district', 'الحي / الموقع', 'text'],
+    ['landUse', 'نوع استعمال الأرض', ['', 'تعليمي (مرفق تعليمي)', 'تجاري', 'سكني', 'سكني تجاري / مختلط', 'غير معروف']],
+    ['landArea', 'مساحة الأرض (م²)', 'num'], ['bldArea', 'مساحة البناء الإجمالية (م²)', 'num'], ['floors', 'عدد الأدوار فوق الأرض', 'num'],
+    ['streets', 'عدد الشوارع المحيطة', 'num'], ['w1', 'عرض الشارع الأعرض (م)', 'num'], ['w2', 'عرض الشارع الثاني (م)', 'num'],
+    ['kgC', 'فصول التمهيدي', 'num'], ['prC', 'فصول الابتدائي', 'num'], ['imC', 'فصول المتوسط (إن وُجد)', 'num'],
+    ['kgS', 'طلاب التمهيدي المتوقعون', 'num'], ['prS', 'طلاب الابتدائي المتوقعون', 'num'], ['imS', 'طلاب المتوسط المتوقعون (إن وُجد)', 'num'],
+    ['parking', 'عدد المواقف داخل العقار', 'num'], ['bus', 'عدد مواقف الحافلات', 'num'],
+    ['prevSchool', 'هل سبق استخدامه كمدرسة؟', ['', 'نعم', 'لا', 'غير معروف']], ['independent', 'هل المبنى مستقل بالكامل للمدرسة؟', ['', 'نعم', 'لا', 'غير معروف']],
+  ];
+  const nz = v => v === '' || v === null || v === undefined ? null : Number(v);
+
+  /* تقييم عقار: يعيد الحالة والأسباب والمؤشرات */
+  function evalProp(p, R) {
+    R = R || PROP.refs();
+    const out = [], add = (lvl, text, cat) => out.push({ lvl, text, cat });
+    const kgC = nz(p.kgC) || 0, prC = nz(p.prC) || 0, imC = nz(p.imC) || 0, kgS = nz(p.kgS) || 0, prS = nz(p.prS) || 0, imS = nz(p.imS) || 0;
+    const classes = kgC + prC + imC, students = kgS + prS + imS;
+    const miss = [];
+    if (!p.landUse || p.landUse === 'غير معروف') miss.push('نوع استعمال الأرض');
+    if (nz(p.landArea) == null) miss.push('مساحة الأرض');
+    if (nz(p.bldArea) == null) miss.push('مساحة البناء');
+    if (nz(p.floors) == null) miss.push('عدد الأدوار');
+    if (nz(p.streets) == null) miss.push('عدد الشوارع');
+    if (nz(p.w1) == null) miss.push('عرض الشارع الأعرض');
+    if (!classes) miss.push('عدد الفصول');
+    if (!students) miss.push('عدد الطلاب المتوقع');
+    if (nz(p.parking) == null) miss.push('عدد المواقف');
+    if (nz(p.bus) == null) miss.push('عدد مواقف الحافلات');
+    if (miss.length) add('miss', 'بيانات أساسية ناقصة: ' + miss.join('، '), 'eng');
+    const m = { classes, students };
+    // 1) الاستعمال
+    if (p.landUse === 'سكني') add('fail', 'الاستعمال سكني: سجل الاشتراطات v2 يقصر المباني التعليمية على الأراضي المخصصة مرفقاً تعليمياً والتجارية، ويسمح على السكني بالحضانة فقط في مبنى مستقل.', 'reg');
+    else if (p.landUse === 'سكني تجاري / مختلط') add('treat', 'استعمال مختلط: يلزم تقرير اشتراطات القطعة من بلدي لتأكيد جواز النشاط التعليمي.', 'reg');
+    else if (p.landUse === 'تجاري') add('info', 'استعمال تجاري: مشمول بالاشتراطات وفق ضوابط محددة (خبر واس) – يُتحقق من الضوابط في النص الساري.', 'reg');
+    else if (p.landUse && p.landUse.startsWith('تعليمي')) add('info', 'أرض مرفق تعليمي: يُتحقق من أثر قرار مجلس الوزراء 704 (أم القرى، أغسطس 2026) على استفادة المدارس الأهلية من أراضي المرافق التعليمية – لم يُتحقق من نصه.', 'unv');
+    // 2) الشوارع
+    const wmax = Math.max(nz(p.w1) || 0, nz(p.w2) || 0);
+    if (nz(p.streets) != null && nz(p.streets) < R.streetsMin.v) add('fail', `العقار على ${fInt(nz(p.streets))} شارع؛ المرجع: عدد الشوارع لا يقل عن ${fInt(R.streetsMin.v)}.`, 'reg');
+    if (nz(p.w1) != null && wmax < R.streetWidthMin.v) add('fail', `أعرض شارع ${fInt(wmax)} م؛ المرجع: لا يقل أحدها عن ${fInt(R.streetWidthMin.v)} م.`, 'reg');
+    // 3) نصيب الطالب من الأرض
+    if (nz(p.landArea) != null && R.lpsComplex.v > 0) {
+      m.capLand = Math.floor(nz(p.landArea) / R.lpsComplex.v);
+      if (students > m.capLand) add('treat', `الطلاب المتوقعون ${fInt(students)} يتجاوزون الطاقة حسب الأرض ${fInt(m.capLand)} (${nf2.format(R.lpsComplex.v)} م²/طالب – مجمع تعليمي).`, 'reg');
+    }
+    // 4) الفصول مقابل الطلاب
+    const cap = (s, c, size, label) => { if (!s) return; if (!c) { add('miss', `لا توجد فصول ${label} مدخلة مقابل ${fInt(s)} طالباً.`, 'eng'); return; } if (!(size > 0)) { add('miss', `سعة فصل ${label} غير محددة – أدخلها في القيم المرجعية.`, 'eng'); return; } if (s > c * size) add('treat', `طلاب ${label} ${fInt(s)} أكثر من سعة الفصول ${fInt(c * size)} (${fInt(c)} × ${fInt(size)}).`, 'eng'); };
+    cap(kgS, kgC, R.kgClass.v, 'التمهيدي'); cap(prS, prC, R.primClass.v, 'الابتدائي'); cap(imS, imC, R.interClass.v, 'المتوسط');
+    m.capRooms = (kgC * (R.kgClass.v || 0)) + (prC * (R.primClass.v || 0)) + (imC * (R.interClass.v || 0));
+    // 5) المواقف والحافلات
+    m.parkReq = Math.ceil(kgC / R.parkKGper.v) + prC * R.parkPrim.v + imC * R.parkInter.v;
+    m.busReq = Math.ceil(classes / R.busPer.v);
+    if (nz(p.parking) != null && classes && nz(p.parking) < m.parkReq) add('treat', `المواقف ${fInt(nz(p.parking))} أقل من المرجع ${fInt(m.parkReq)} (داخل حدود الملكية).`, 'reg');
+    if (nz(p.bus) != null && classes && nz(p.bus) < m.busReq) add('treat', `مواقف الحافلات ${fInt(nz(p.bus))} أقل من المرجع ${fInt(m.busReq)} (حافلة لكل ${fInt(R.busPer.v)} فصول).`, 'reg');
+    // 6) الأدوار
+    if (nz(p.floors) != null && nz(p.floors) > R.floorsMax.v) add('treat', `${fInt(nz(p.floors))} أدوار؛ المرجع للأدوار التعليمية ${fInt(R.floorsMax.v)} (أرضي + 3) – الأدوار الزائدة لاستخدام غير تعليمي إن سُمح.`, 'reg');
+    if (kgS) add('info', 'التمهيدي: يُتحقق من الدور المسموح له ومن منع الدرج للأطفال (سجل v2: الدور الأرضي، أو الأول بمنحدر).', 'reg');
+    // 7) الاستقلال والاستخدام السابق
+    if (p.independent === 'لا') add('treat', 'المبنى غير مستقل للمدرسة: لم نتحقق من نص يجيز أو يمنع المدرسة في جزء من مبنى – يلزم تأكيد الجهات.', 'unv');
+    else if (p.independent !== 'نعم') add('info', 'استقلال المبنى غير محدد – يلزم تأكيده.', 'unv');
+    if (p.prevSchool === 'نعم') add('ok', 'سبق استخدامه كمدرسة: يُتحقق من سريان الترخيص السابق وشهادة الدفاع المدني ومطابقته للاشتراطات الحالية.', 'lic');
+    else if (p.prevSchool === 'لا') add('info', 'لم يُستخدم كمدرسة: يلزم تأهيل كامل وتغيير استخدام وتقييم إنشائي للإشغال التعليمي.', 'lic');
+    // 8) المراحل
+    if (imS || imC) add('info', 'المرحلة المتوسطة خارج المراحل المعتمدة للمشروع (تمهيدي + ابتدائي) – تُقيَّم فقط إن أُضيفت رسمياً.', 'unv');
+    if (kgS) add('info', 'تصنيف «مجمع تعليمي» مع التمهيدي: سجل v2 يذكر أن تعريف المجمع يستثني الحضانة ورياض الأطفال – يحتاج تأكيد الأمانة.', 'unv');
+    // 9) المستندات
+    const docs = p.docs || {}, missingDocs = DOCS.filter(([k]) => !docs[k]).map(([, l]) => l);
+    const keyDocs = ['deed', 'permit', 'plan', 'structural', 'civil'].filter(k => !docs[k]).map(k => DOCS.find(d => d[0] === k)[1]);
+    if (keyDocs.length) add('treat', 'مستندات أساسية غير متوفرة: ' + keyDocs.join('، '), 'lic');
+    m.docs = DOCS.length - missingDocs.length;
+    const has = l => out.some(x => x.lvl === l);
+    const status = has('fail') ? 'fail' : has('miss') ? 'miss' : has('treat') ? 'treat' : 'ok';
+    return { status, reasons: out, m };
+  }
+  const STATUS = { ok: ['good', 'مناسب مبدئياً'], treat: ['mid', 'يحتاج معالجة'], fail: ['bad', 'غير مناسب وفق المعلومات المتاحة'], miss: ['mid', 'غير مكتمل البيانات'] };
+  const stTag = st => `<span class="tag ${st === 'ok' ? 'c-ok' : st === 'fail' ? 'c-neg' : st === 'miss' ? 'c-est' : 'c-ver'}">${STATUS[st][1]}</span>`;
+  function propsSummary() {
+    const l = PROP.list(), R = PROP.refs(), ev = l.map(p => ({ p, e: evalProp(p, R) }));
+    const cnt = st => ev.filter(x => x.e.status === st).length;
+    const table = `<div class="tbl-wrap"><table class="t"><thead><tr><th>العقار</th><th>النتيجة (استرشادية)</th></tr></thead><tbody>${ev.map(x => `<tr><td>${esc(x.p.name || 'عقار بلا اسم')}</td><td>${stTag(x.e.status)}</td></tr>`).join('')}</tbody></table></div>`;
+    return { n: l.length, ok: cnt('ok'), treat: cnt('treat'), fail: cnt('fail'), miss: cnt('miss'), table };
+  }
+
+  /* بطاقة حالة التحقق من المرجع النظامي (تُعرض في هذا القسم وفي المراجع) */
+  function regStatusCard() {
+    return `<div class="card"><h3>حالة التحقق من الاشتراطات النظامية (نوفمبر 2026)</h3>
+      <div class="note bad small" style="margin-bottom:10px"><b>لم يُتحقق من أحدث نسخة سارية من النص الرسمي.</b> صفحة الوزارة <a href="https://momah.gov.sa/ar/node/16243" target="_blank" rel="noopener">momah.gov.sa/ar/node/16243</a> وملف PDF المنشور تعذّر فتحهما من بيئة إعداد الموقع، وكذلك موقع جريدة أم القرى. لذلك كل قيمة نظامية في هذا القسم معلّمة «بانتظار التحقق»، ولا تُعد نتيجة نهائية.</div>
+      <table class="t"><tbody>
+        <tr><th>الوثيقة</th><td>اشتراطات المباني التعليمية الخاصة 1447هـ – 2025م (وزارة البلديات والإسكان)</td></tr>
+        <tr><th>رقم القرار وتاريخه</th><td>4600425374/1 بتاريخ 1447/06/13هـ – كما ورد في سجل الدراسة v2 (ورقة 29)، ولم يُطابق مع النص الرسمي في هذا التحديث</td></tr>
+        <tr><th>تاريخ الإعلان</th><td>1 رجب 1447هـ الموافق 21 ديسمبر 2025م – <a href="https://www.spa.gov.sa/N2472560" target="_blank" rel="noopener">خبر وكالة الأنباء السعودية</a> (ظهر في نتائج البحث)</td></tr>
+        <tr><th>آخر تحديث للنسخة</th><td>غير متحقق منه – تعذّر فتح صفحة الوزارة</td></tr>
+        <tr><th>مستجد يحتاج تحقق</th><td>نتيجة بحث في <a href="https://www.uqn.gov.sa/details?p=27099" target="_blank" rel="noopener">أم القرى (18 أغسطس 2026)</a> تشير إلى قرار مجلس الوزراء رقم 704 بإيقاف العمل بضوابط استفادة المدارس الأهلية من أراضي المرافق التعليمية، وتكليف وزارة التعليم بضوابط جديدة بالتنسيق مع وزارة البلديات والإسكان – لم يُقرأ نص القرار</td></tr>
+        <tr><th>تعارض قائم</th><td>سجل v2 (جدول 3 الفئة أ): المجمع 4.80 م²/طالب؛ خبر واس وعكاظ: «من 4 م² لرياض الأطفال حتى 5 م² للمجمعات» – يُحسم من النص الرسمي</td></tr>
+        <tr><th>المطلوب</th><td>رفع نسخة PDF من الاشتراطات السارية (أو رابط بديل يمكن فتحه) لمطابقة كل القيم وتحديث هذا القسم</td></tr>
+      </tbody></table></div>`;
+  }
+
+  const CRITERIA = [
+    ['الاستعمال النظامي للعقار', ['reg', 'unv'], 'استعمال الأرض في المخطط المعتمد ورخصة البناء، وجواز النشاط التعليمي على القطعة.', 'سجل v2: تسري الاشتراطات على الأراضي المخصصة مرفقاً تعليمياً والأراضي التجارية، والحضانة فقط على السكني بمبنى مستقل. خبر واس: النطاق يشمل أراضي المرافق التعليمية الخاصة والأراضي التجارية وفق ضوابط. مستجد غير متحقق: قرار مجلس الوزراء 704 (أغسطس 2026).', 'صك، رخصة بناء، تقرير اشتراطات القطعة (بلدي)'],
+    ['إمكانية الترخيص التعليمي', ['lic', 'unv'], 'قابلية حصول المبنى على ترخيص وزارة التعليم للمراحل المطلوبة.', 'الترخيص من وزارة التعليم مطلوب (خبر عكاظ). نظام التعليم العام الجديد يسري من 20/1/2027 وتبقى لائحة المدارس الأهلية حتى صدور البدائل (ورقة 29). متطلبات الترخيص الخاصة بالمبنى المستأجر لم يُتحقق منها.', 'خطاب مبدئي من إدارة التعليم الأهلي'],
+    ['استقلال المبنى', ['unv'], 'هل المبنى مخصص بالكامل للمدرسة، وهل يوجد مدخل ومخرج مستقلان.', 'لم نجد نصاً متحققاً منه للمدارس الأهلية. الخبر يذكر السماح لمدارس الجاليات بجزء من مبنى قائم بشروط، ولا ينطبق مباشرة على المشروع.', 'عقد الإيجار ومخطط المبنى'],
+    ['موقع العقار والشوارع وعروضها', ['reg'], 'عدد الشوارع المحيطة وعرض كل منها ومداخل الطوارئ والحافلات.', 'شارعان لا يقل عرض أحدهما عن 25 م (خبر واس 21/12/2025 وسجل v2) – النص الكامل لم يُراجع.', 'كروكي، رفع مساحي'],
+    ['مساحة الأرض ومساحة البناء', ['reg', 'lic'], 'مساحة الأرض حسب الصك، والمسطحات المبنية لكل دور، والفراغات المتاحة.', 'نصيب الطالب من الأرض – سجل v2: المجمع 4.80 م²، والخبر الرسمي: حتى 5 م² للمجمعات (تعارض). المساحات الداخلية تحددها وزارة التعليم (الدليل غير منشور).', 'صك، رخصة بناء، مخططات As-built'],
+    ['عدد الأدوار', ['reg'], 'عدد الأدوار فوق الأرض والقبو، ومنسوب الأرضي بالنسبة للشارع.', 'سجل v2 (جدول 4): الابتدائي والمتوسط والمجمع حتى أرضي + 3، ورياض الأطفال أرضي + 1. الخبر: حسب كود البناء المعتمد.', 'رخصة البناء'],
+    ['الطاقة الاستيعابية للابتدائي والمتوسط', ['eng', 'unv'], 'أدنى قيمة بين: الأرض ÷ نصيب الطالب، والفصول × سعة الفصل، وما تسمح به المواقف والمرافق.', 'المراحل المعتمدة تمهيدي وابتدائي؛ المتوسط ورد في الطلب ولا يدخل ضمن المراحل المعتمدة – يحتاج قراراً. الطاقة الرسمية تحددها وزارة التعليم.', '—'],
+    ['عدد الفصول الممكنة', ['eng', 'unv'], 'عدد الغرف الصالحة للتحويل إلى فصول، ومساحة كل غرفة وإضاءتها وتهويتها.', 'مساحة الفصل وسعته افتراضات الدراسة (التمهيدي 20 والابتدائي 25 طالباً) حتى صدور دليل وزارة التعليم.', 'مخططات As-built'],
+    ['المواقف ومواقف الحافلات', ['reg'], 'عدد المواقف داخل حدود الملكية، ومواقف الحافلات ومسار الإنزال.', 'سجل v2: رياض الأطفال موقف لكل 3 فصول، الابتدائي والمتوسط موقفان لكل فصل، وموقف حافلة لكل 3 فصول، داخل حدود الملكية – النص الكامل لم يُراجع.', 'مخطط الموقع'],
+    ['الساحات والمرافق التعليمية', ['reg', 'lic'], 'مساحة الساحات وتظليلها، والمصلى والمقصف والمكتبة والمستودع وغرف الإدارة.', 'سجل v2: تغطية الساحات 75% على الأقل مع إضاءة وتهوية طبيعية، والمستودع 100 م² حداً أدنى؛ مساحة الساحات تحددها وزارة التعليم.', 'مخططات As-built'],
+    ['المختبرات والمعامل', ['lic', 'eng'], 'إمكانية تخصيص مختبر علوم ومعمل حاسب ومصادر تعلم بالتمديدات اللازمة.', 'حسب البرنامج المعتمد من وزارة التعليم؛ البرنامج المرجعي في ورقة 06.', '—'],
+    ['دورات المياه', ['eng', 'unv'], 'العدد والتوزيع لكل قسم ودور، ودورات الكادر وذوي الإعاقة.', 'النسب تحددها الجهة المشرفة؛ قيم الدراسة مبنية على IPC (أساس كود – يحتاج مطابقة SBC).', 'مخططات As-built'],
+    ['التكييف والتهوية والإضاءة', ['eng'], 'حالة منظومة التكييف وعمرها وقدرتها، والتهوية والإضاءة الطبيعية للفصول، والقدرة الكهربائية.', 'تقييم فني من مهندس مختص؛ كفاءة الطاقة وفق SBC 601/602 (أساس كود).', 'تقرير فحص الأنظمة'],
+    ['السلامة الإنشائية', ['eng', 'lic'], 'سلامة الهيكل وقدرته على أحمال الإشغال التعليمي بعد تغيير الاستخدام.', 'تقرير سلامة إنشائية من مكتب هندسي معتمد؛ مراجعة الأحمال وفق SBC 301 (أساس كود – يحتاج مطابقة).', 'تقرير سلامة إنشائية'],
+    ['الحريق ومخارج الطوارئ', ['lic', 'eng'], 'أنظمة الإنذار والإطفاء والرشاشات، وعدد المخارج والأدراج وتباعدها.', 'اعتماد الدفاع المدني مطلوب؛ متطلبات المخارج والرشاشات وفق SBC 201/801 (قيم الدراسة أساس IBC/IFC – تحتاج مطابقة).', 'شهادة الدفاع المدني'],
+    ['سهولة الوصول لذوي الإعاقة', ['eng'], 'المداخل والمنحدرات والمصاعد ودورات المياه والمواقف المخصصة.', 'وفق SBC 201 (أساس كود – يحتاج مطابقة).', 'مخططات As-built'],
+    ['التعديلات اللازمة قبل التشغيل', ['eng', 'lic'], 'قائمة الأعمال: فصل قسمي البنين والبنات، الأسوار، تجهيز الفصول والساحات والتظليل، المختبرات، دورات المياه، الحريق، الوصول الشامل، اللوحات، والتمهيدي في الدور المسموح.', 'الأسوار في سجل v2: 2.40 م مصمتة لمباني البنات (غير متحقق من النص). تُعتمد قائمة الأعمال بعد زيارة فنية للعقار.', 'تقرير الزيارة الفنية'],
+  ];
+
+  let propOpen = null;
+  function pProperty() {
+    const R = PROP.refs(), list = PROP.list(), ev = list.map(p => evalProp(p, R));
+    const unverified = Object.values(R).filter(r => !r.ok && !/افتراض|لا توجد/.test(r.src)).length;
+    const field = (p, [f, l, t]) => {
+      const v = p[f] == null ? '' : p[f];
+      const ctl = Array.isArray(t) ? `<select data-pid="${p.id}" data-f="${f}">${t.map(o => `<option${String(v) === o ? ' selected' : ''} value="${esc(o)}">${o ? esc(o) : '—'}</option>`).join('')}</select>`
+        : `<input data-pid="${p.id}" data-f="${f}" ${t === 'num' ? 'inputmode="decimal"' : ''} value="${esc(v)}">`;
+      return `<label class="pf"><span>${esc(l)}</span>${ctl}</label>`;
+    };
+    const card = (p, i) => { const e = ev[i], st = STATUS[e.status]; return `<div class="card pcard">
+      <div class="pc-head"><h3>${esc(p.name || 'عقار ' + (i + 1))}</h3>${stTag(e.status)}<span class="small muted">استرشادي</span>
+        <span style="margin-inline-start:auto;display:flex;gap:6px" class="no-print"><button class="btn" data-pa="toggle" data-pid="${p.id}">${propOpen === p.id ? 'إخفاء البيانات' : 'تعديل البيانات'}</button><button class="btn" data-pa="dup" data-pid="${p.id}">نسخ</button><button class="btn" data-pa="del" data-pid="${p.id}">حذف</button></span></div>
+      ${propOpen === p.id ? `<div class="pform">${FIELDS.map(f => field(p, f)).join('')}</div>
+        <div class="pdocs"><b>المستندات المتوفرة:</b>${DOCS.map(([k, l]) => `<label><input type="checkbox" data-pid="${p.id}" data-f="docs.${k}"${p.docs && p.docs[k] ? ' checked' : ''}> ${esc(l)}</label>`).join('')}</div>` : ''}
+      <div class="verdict ${st[0]}" style="margin-top:10px"><div class="ic">${e.status === 'ok' ? '✓' : '!'}</div><div><h4>${st[1]} <span class="small muted">(نتيجة استرشادية – ليست موافقة أو ترخيصاً)</span></h4>
+        <ul class="list small" style="margin:6px 0 0">${e.reasons.filter(r => r.lvl !== 'ok' || true).map(r => `<li><b class="rl-${r.lvl}">${{ fail: 'يمنع', treat: 'يحتاج معالجة', miss: 'ناقص', info: 'للتحقق', ok: 'إيجابي' }[r.lvl]}:</b> ${esc(r.text)} ${catTag(r.cat)}</li>`).join('') || '<li>لا توجد ملاحظات وفق القيم المرجعية الحالية.</li>'}</ul></div></div></div>`; };
+    const cmpRows = [['الحالة', (p, e) => stTag(e.status)], ['استعمال الأرض', p => esc(p.landUse || '—')], ['مساحة الأرض / البناء (م²)', p => `${p.landArea || '—'} / ${p.bldArea || '—'}`], ['الأدوار', p => esc(p.floors || '—')],
+      ['الشوارع / أعرض شارع (م)', p => `${p.streets || '—'} / ${Math.max(nz(p.w1) || 0, nz(p.w2) || 0) || '—'}`], ['الفصول (تمهيدي / ابتدائي / متوسط)', p => `${p.kgC || 0} / ${p.prC || 0} / ${p.imC || 0}`],
+      ['الطلاب المتوقعون', (p, e) => fInt(e.m.students)], ['الطاقة حسب الأرض', (p, e) => e.m.capLand != null ? fInt(e.m.capLand) : '—'], ['سعة الفصول', (p, e) => fInt(e.m.capRooms)],
+      ['المواقف: متوفر / مرجع', (p, e) => `${p.parking ?? '—'} / ${fInt(e.m.parkReq)}`], ['الحافلات: متوفر / مرجع', (p, e) => `${p.bus ?? '—'} / ${fInt(e.m.busReq)}`],
+      ['سبق استخدامه كمدرسة', p => esc(p.prevSchool || '—')], ['مبنى مستقل', p => esc(p.independent || '—')], ['المستندات المتوفرة', (p, e) => `${e.m.docs} من ${DOCS.length}`]];
+    const cmp = list.length ? `<div class="tbl-wrap"><table class="t"><thead><tr><th>البند</th>${list.map((p, i) => `<th>${esc(p.name || 'عقار ' + (i + 1))}</th>`).join('')}</tr></thead><tbody>${cmpRows.map(([l, f]) => `<tr><td><b>${l}</b></td>${list.map((p, i) => `<td>${f(p, ev[i])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '';
+    const refs = `<div class="tbl-wrap"><table class="t"><thead><tr><th>القيمة المرجعية</th><th>القيمة</th><th>المصدر</th><th>تم التحقق من النص الساري</th></tr></thead><tbody>${Object.entries(R).map(([k, r]) => `<tr><td>${esc(r.l)}</td><td class="in"><input data-ref="${k}" inputmode="decimal" value="${r.v == null ? '' : esc(r.v)}" style="width:90px"> <span class="small muted">${esc(r.u)}</span></td><td class="small">${esc(r.src)}</td><td>${/افتراض|لا توجد/.test(r.src) ? '<span class="small muted">ليس اشتراطاً</span>' : `<label class="small"><input type="checkbox" data-refok="${k}"${r.ok ? ' checked' : ''}> ${r.ok ? '<span class="tag c-ok">متحقق منه</span>' : '<span class="tag c-ver">غير متحقق</span>'}</label>`}</td></tr>`).join('')}</tbody></table></div>`;
+    return head('القسم 5', 'معايير اختيار وتقييم المبنى المدرسي المستأجر', 'معايير تقييم المباني القائمة المعروضة للإيجار قبل التعاقد، وأداة لمقارنة العقارات المرشحة. <b>التقييم داخل الموقع استرشادي، ولا يُعد موافقة أو ترخيصاً رسمياً.</b>') +
+      `<div class="note bad" style="margin-bottom:16px"><b>تنبيه:</b> لا تُعتمد أي نتيجة نهائية لتقييم عقار قبل التحقق من الاشتراطات السارية من النص الرسمي، واعتماد الجهات (الأمانة/بلدي، وزارة التعليم، الدفاع المدني) ومكتب هندسي معتمد. ${unverified ? `${fInt(unverified)} من القيم المرجعية التنظيمية المستخدمة في الأداة <b>غير متحقق منها</b> بعد.` : 'عُلّمت كل القيم المرجعية بأنها متحقق منها من قبل المستخدم.'}</div>
+      ${regStatusCard()}
+      <div style="height:16px"></div>
+      <div class="card"><h3>تصنيف المعايير</h3><div class="legend">${Object.keys(CAT).map(catTag).join('')}</div>
+        <ul class="list small" style="margin-top:10px">
+          <li><b>اشتراط نظامي:</b> من اشتراطات المباني التعليمية الخاصة (وزارة البلديات والإسكان) كما وردت في سجل الدراسة v2 والخبر الرسمي – بانتظار المطابقة مع النص الساري.</li>
+          <li><b>متطلب ترخيص وتشغيل:</b> ما تطلبه وزارة التعليم والدفاع المدني والأمانة للترخيص والتشغيل، دون أرقام غير موثقة.</li>
+          <li><b>معيار هندسي وفني:</b> فحوص فنية مهنية تساعد في تقييم المبنى قبل استئجاره، وليست اشتراطات نظامية.</li>
+          <li><b>لم يُتحقق منه:</b> بنود لا يوجد لها مصدر متحقق منه في هذا التحديث.</li></ul></div>
+      <div style="height:16px"></div>
+      <div class="card"><h3>المعايير السبعة عشر</h3><p class="sub">ما يُفحص في كل عقار، وتصنيفه، والمرجع المتاح، والمستندات المطلوبة</p>
+        <div class="tbl-wrap"><table class="t"><thead><tr><th>#</th><th>المعيار</th><th>التصنيف</th><th>ما يُتحقق منه</th><th>المرجع المتاح وحالته</th><th>المستندات</th></tr></thead><tbody>
+        ${CRITERIA.map(([t, cats, chk, ref, doc], i) => `<tr><td class="n">${i + 1}</td><td><b>${esc(t)}</b></td><td>${cats.map(catTag).join(' ')}</td><td class="small">${esc(chk)}</td><td class="small">${esc(ref)}</td><td class="small">${esc(doc)}</td></tr>`).join('')}
+        </tbody></table></div></div>
+      <div style="height:16px"></div>
+      <div class="card"><h3>أداة تقييم العقارات المرشحة</h3>
+        <p class="sub">أضف كل عقار معروض وبياناته، وتظهر النتيجة وأسبابها فوراً. تُحفظ البيانات <b>في هذا المتصفح وعلى هذا الجهاز فقط</b>، ولا تُزامَن بين الأجهزة؛ استخدم «تصدير» لنقلها.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap" class="no-print"><button class="btn pri" data-pa="add">+ إضافة عقار</button><button class="btn" data-pa="export">تصدير العقارات (JSON)</button><label class="btn" style="cursor:pointer">استيراد<input type="file" accept=".json,application/json" data-pa-import hidden></label></div>
+        <div class="legend" style="margin-top:12px"><b>النتائج:</b>${['ok', 'treat', 'fail', 'miss'].map(stTag).join('')}</div>
+      </div>
+      <div style="height:16px"></div>
+      <div class="stack">${list.map(card).join('') || '<div class="card"><p class="muted">لا توجد عقارات بعد. اضغط «إضافة عقار».</p></div>'}</div>
+      ${list.length > 1 ? `<div style="height:16px"></div><div class="card"><h3>مقارنة العقارات</h3>${cmp}</div>` : ''}
+      <div style="height:16px"></div>
+      <details class="sx"><summary>القيم المرجعية المستخدمة في الأداة<span class="s">قابلة للتعديل بعد مراجعة النص الرسمي</span></summary><div class="body">
+        <p class="small muted">كل قيمة تنظيمية هنا منقولة من سجل الاشتراطات في الدراسة v2 أو من الخبر الرسمي، وليست متحققاً منها من النص الساري. بعد مراجعة النص عدّل القيمة إن لزم وعلّم «تم التحقق». الحساب: مواقف التمهيدي = ⌈الفصول ÷ القيمة⌉، والابتدائي والمتوسط = الفصول × القيمة، والحافلات = ⌈إجمالي الفصول ÷ القيمة⌉، والطاقة حسب الأرض = ⌊مساحة الأرض ÷ نصيب الطالب⌋.</p>${refs}</div></details>`;
+  }
+
+  /* أحداث أداة العقارات */
+  const newProp = () => ({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', docs: {} });
+  document.addEventListener('change', e => {
+    const el = e.target;
+    if (el.dataset && el.dataset.pid && el.dataset.f) {
+      const l = PROP.list(), p = l.find(x => x.id === el.dataset.pid); if (!p) return;
+      const f = el.dataset.f;
+      if (f.startsWith('docs.')) { p.docs = p.docs || {}; p.docs[f.slice(5)] = el.checked; }
+      else { const fd = FIELDS.find(x => x[0] === f); let v = el.value.trim(); if (fd && fd[2] === 'num') { v = v === '' ? null : Number(v.replace(/,/g, '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))); if (v !== null && !isFinite(v)) { toast('أدخل رقماً صحيحاً'); return; } } p[f] = v; }
+      PROP.save(l); render(current, true); return;
+    }
+    if (el.dataset && el.dataset.ref) { const v = el.value.trim(); PROP.saveRef(el.dataset.ref, { v: v === '' ? null : Number(v) }); render(current, true); return; }
+    if (el.dataset && el.dataset.refok) { PROP.saveRef(el.dataset.refok, { ok: el.checked }); render(current, true); return; }
+    if (el.hasAttribute && el.hasAttribute('data-pa-import') && el.files[0]) {
+      const r = new FileReader(); r.onload = () => { try { const d = JSON.parse(r.result); const arr = Array.isArray(d) ? d : d.properties; if (!Array.isArray(arr)) throw 0; PROP.save(arr); if (d.refs) lsSet(REF_KEY, d.refs); render(current, true); toast('استُوردت العقارات (' + arr.length + ')'); } catch (x) { alert('ملف غير صالح'); } }; r.readAsText(el.files[0]);
+    }
+  });
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-pa]'); if (!t) return;
+    const a = t.dataset.pa, l = PROP.list();
+    if (a === 'add') { const p = newProp(); p.name = 'عقار ' + (l.length + 1); l.push(p); PROP.save(l); propOpen = p.id; }
+    else if (a === 'toggle') propOpen = propOpen === t.dataset.pid ? null : t.dataset.pid;
+    else if (a === 'dup') { const p = l.find(x => x.id === t.dataset.pid); if (p) { const c = { ...JSON.parse(JSON.stringify(p)), id: newProp().id, name: (p.name || 'عقار') + ' (نسخة)' }; l.push(c); PROP.save(l); } }
+    else if (a === 'del') { const i = l.findIndex(x => x.id === t.dataset.pid); if (i >= 0) { l.splice(i, 1); PROP.save(l); } }
+    else if (a === 'export') { const data = { app: 'growth-ladder-properties', exported: new Date().toISOString(), properties: l, refs: ls(REF_KEY, {}) }; const x = document.createElement('a'); x.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })); x.download = 'سلم_النمو_العقارات_' + new Date().toISOString().slice(0, 10) + '.json'; x.click(); return; }
+    render(current, true);
+  });
+
   /* ================= لوحة المدخلات الرئيسية ================= */
   function drawerHTML() {
     const si = SHEET['03'], d = M.dims[si]; let html = '', open = false;
@@ -826,8 +878,7 @@
     return html + (open ? '</div>' : '');
   }
   function openDrawer() {
-    $('#drawer .body').innerHTML = `<div class="note info small">عدّل أي افتراض وستتحدث كل الصفحات والرسوم فوراً. القيم الأصلية من دراسة v2 تبقى محفوظة ويمكن استعادتها بزر «القيم الأصلية». بقية المدخلات (الرسوم، الرواتب، أسعار البنود، معاملات السيناريوهات…) قابلة للتعديل داخل جداول كل قسم (الخلايا الصفراء).</div>
-      <div class="grp"><h4>السيناريو النشط</h4><div class="field"><label>اختر السيناريو</label><div><select data-k="${E.resolve('Scenario')}">${['متحفظ', 'متوسط', 'متفائل'].map(s => `<option${s === NM('Scenario') ? ' selected' : ''}>${s}</option>`).join('')}</select></div></div></div>` + drawerHTML();
+    $('#drawer .body').innerHTML = `<div class="note info small">عدّل أي افتراض وستتحدث كل الصفحات والرسوم فوراً. القيم الأصلية من دراسة v2 تبقى محفوظة ويمكن استعادتها بزر «القيم الأصلية». بقية المدخلات (الفصول، الكادر، المدد، المخاطر…) قابلة للتعديل داخل جداول كل قسم (الخلايا الصفراء).</div>` + drawerHTML();
     $('#drawer').classList.add('open'); $('#scrim').classList.add('show');
   }
   function closeDrawer() { $('#drawer').classList.remove('open'); $('#scrim').classList.remove('show'); $('#side').classList.remove('open'); }
@@ -844,7 +895,6 @@
     after.forEach(f => f());
     $('#crumb').innerHTML = `<button class="btn menu no-print" id="btn-menu" aria-label="القائمة">☰</button>${esc(p.t)}`;
     $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.id === p.id));
-    $$('.seg button').forEach(b => b.classList.toggle('on', b.dataset.s === NM('Scenario')));
     document.title = p.t + ' – مدارس سُلّم النمو | دراسة الجدوى';
     if (keepScroll) scrollTo(0, y); else scrollTo(0, 0);
   }
@@ -854,9 +904,9 @@
   function printAll() {
     const keep = current; after.length = 0;
     const html = `<div class="cover"><div class="top"><img src="assets/brand/logo_arabic_color.svg" alt="سُلّم النمو"></div>
-      <div><div style="color:var(--aqua);font-weight:700">مدرسة أهلية – الرياض</div><h1>الدراسة الفنية والهندسية والجدوى المالية</h1>
+      <div><div style="color:var(--aqua);font-weight:700">مدرسة أهلية – الرياض</div><h1>الدراسة الفنية والهندسية – خيار المبنى المستأجر</h1>
       <p style="font-size:13pt;color:var(--grey);margin:0">مدارس سُلّم النمو | <span class="en">Growth Ladder Schools</span><br>نرتقي بالعلم، وننمو بالمستقبل</p></div>
-      <div><div class="band"></div><p class="small muted">الإصدار v2 · السيناريو: ${esc(NM('Scenario'))} · ${changedCount() ? `<b>يتضمن ${changedCount()} مدخلاً معدلاً عن الدراسة الأصلية</b>` : 'بالمدخلات الأصلية للدراسة'} · طُبع في ${esc(new Date().toLocaleDateString('ar-SA-u-nu-latn-ca-gregory'))}<br>دراسة تقديرية لأغراض القرار المبدئي؛ ليست اعتماداً رسمياً أو هندسياً.</p></div></div>` +
+      <div><div class="band"></div><p class="small muted">النسخة غير المالية (v3) · ${changedCount() ? `<b>يتضمن ${changedCount()} مدخلاً معدلاً عن الدراسة الأصلية</b>` : 'بالمدخلات الأصلية للدراسة'} · طُبع في ${esc(new Date().toLocaleDateString('ar-SA-u-nu-latn-ca-gregory'))}<br>دراسة تقديرية لأغراض القرار المبدئي؛ ليست اعتماداً رسمياً أو هندسياً.</p></div></div>` +
       PAGES.map(p => `<section class="psec">${p.r()}</section>`).join('');
     $('#page').innerHTML = html; after.forEach(f => f());
     $$('#page details').forEach(d => d.open = true);
@@ -884,14 +934,13 @@
   });
   document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.k && e.target.tagName === 'INPUT') e.target.blur(); if (e.key === 'Escape') { closeModal(); closeDrawer(); $('#lightbox').classList.remove('show'); } });
   document.addEventListener('click', e => {
-    const t = e.target.closest('[data-how],[data-a],[data-engtab],[data-risktab],[data-s],figure[data-img],#btn-menu,#nav a');
+    const t = e.target.closest('[data-how],[data-a],[data-engtab],[data-risktab],figure[data-img],#btn-menu,#nav a');
     if (!t) { if (e.target.id === 'modal') closeModal(); return; }
     if (t.matches('#nav a')) { $('#side').classList.remove('open'); $('#scrim').classList.remove('show'); return; }
     if (t.id === 'btn-menu') { $('#side').classList.add('open'); $('#scrim').classList.add('show'); return; }
     if (t.dataset.how) return showHow(t.dataset.how, t.dataset.extra);
     if (t.dataset.engtab) { engTab = t.dataset.engtab; return render(current, true); }
     if (t.dataset.risktab) { riskTab = t.dataset.risktab; return render(current, true); }
-    if (t.dataset.s) { setInput(E.resolve('Scenario'), t.dataset.s); return; }
     if (t.dataset.img) { $('#lightbox img').src = t.dataset.img; $('#lightbox').classList.add('show'); return; }
     const a = t.dataset.a;
     if (a === 'close') closeModal();
@@ -915,12 +964,12 @@
 
   function showHelp() {
     modal(`<h3>كيف تستخدم الموقع</h3><ol class="list">
-      <li>ابدأ من <b>الرئيسية</b>: الحكم المبدئي وأهم المؤشرات والرسوم.</li>
-      <li>بدّل <b>السيناريو</b> (متحفظ / متوسط / متفائل) من الشريط العلوي.</li>
+      <li>ابدأ من <b>الرئيسية</b>: وضع المشروع وأهم المؤشرات الفنية.</li>
+      <li>قيّم العقارات المرشحة للاستئجار في قسم <b>معايير اختيار وتقييم المبنى المدرسي المستأجر</b>؛ النتيجة استرشادية وليست موافقة رسمية.</li>
       <li>افتح <b>الافتراضات</b> لتعديل المدخلات الرئيسية، أو عدّل الخلايا الصفراء داخل جداول أي قسم. تتحدث كل الأرقام والرسوم فوراً.</li>
       <li>زر <b>؟</b> بجانب أي مؤشر يعرض معادلته الأصلية ومكانها في ملف الدراسة.</li>
       <li><b>حفظ / استعادة</b>: يحفظ التعديلات في هذا المتصفح فقط، ويمكن تصديرها ملفاً لنقلها لجهاز آخر.</li>
-      <li><b>القيم الأصلية</b>: يعيد كل المدخلات إلى دراسة v2.</li>
+      <li><b>القيم الأصلية</b>: يعيد كل المدخلات إلى قيم الدراسة (النسخة غير المالية).</li>
       <li><b>تصدير PDF</b>: يجهز تقريراً كاملاً بكل الأقسام؛ اختر «حفظ كـ PDF» في نافذة الطباعة.</li></ol>
       <div class="note info small">التعديلات تُحفظ تلقائياً محلياً في هذا المتصفح وعلى هذا الجهاز فقط، ولا تتم مزامنتها بين الأجهزة.</div>
       <div style="margin-top:14px;text-align:left"><button class="btn" data-a="close">إغلاق</button></div>`);
@@ -931,5 +980,5 @@
   $('#build').textContent = `المصدر: ${M.source} · ${fInt(Object.keys(M.f).length)} معادلة · ${fInt(Object.keys(M.inp).length)} مدخلاً`;
   render(location.hash.slice(1) || 'home');
   if (new URLSearchParams(location.search).has('print')) setTimeout(printAll, 600);
-  window.GL = { E, M, core, yearly, render, PAGES }; // للاختبار والتطوير
+  window.GL = { E, M, core, render, PAGES, evalProp, PROP }; // للاختبار والتطوير
 })();
