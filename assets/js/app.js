@@ -237,18 +237,19 @@
   }
 
   /* ================= الصفحات ================= */
+  /* ترتيب القائمة حسب أولوية المستثمر: التعريف ← المتطلبات النظامية والمبنى ← الدراسة الفنية ← القرار والتنفيذ ← المراجع */
   const PAGES = [
-    { id: 'home', t: 'الرئيسية', r: pHome },
-    { id: 'summary', t: 'الملخص التنفيذي', r: pSummary },
-    { id: 'market', t: 'دراسة السوق والطلب', r: pMarket },
-    { id: 'engineering', t: 'الدراسة الفنية والهندسية', r: pEngineering },
-    { id: 'property', t: 'معايير المباني التعليمية', r: pProperty },
-    { id: 'regulations', t: 'اشتراطات المباني التعليمية', r: pRegulations },
-    { id: 'capacity', t: 'الطاقة الاستيعابية', r: pCapacity },
-    { id: 'timeline', t: 'الجدول الزمني للتنفيذ', r: pTimeline },
-    { id: 'risks', t: 'المخاطر والافتراضات', r: pRisks },
-    { id: 'refs', t: 'المراجع والاعتمادات', r: pRefs },
-    { id: 'identity', t: 'الهوية المؤسسية والمراجع البصرية', r: pIdentity },
+    { id: 'home', t: 'الرئيسية', r: pHome, g: 'التعريف بالمشروع' },
+    { id: 'summary', t: 'الملخص التنفيذي', r: pSummary, g: 'التعريف بالمشروع' },
+    { id: 'regulations', t: 'اشتراطات المباني التعليمية', r: pRegulations, g: 'المتطلبات النظامية والمبنى', key: 1 },
+    { id: 'property', t: 'معايير المباني التعليمية', r: pProperty, g: 'المتطلبات النظامية والمبنى', key: 1 },
+    { id: 'engineering', t: 'الدراسة الفنية والهندسية', r: pEngineering, g: 'الدراسة الفنية' },
+    { id: 'capacity', t: 'الطاقة الاستيعابية', r: pCapacity, g: 'الدراسة الفنية' },
+    { id: 'risks', t: 'المخاطر والافتراضات', r: pRisks, g: 'القرار والتنفيذ' },
+    { id: 'market', t: 'دراسة السوق والطلب', r: pMarket, g: 'القرار والتنفيذ' },
+    { id: 'timeline', t: 'الجدول الزمني للتنفيذ', r: pTimeline, g: 'القرار والتنفيذ' },
+    { id: 'refs', t: 'المراجع والاعتمادات', r: pRefs, g: 'المراجع والهوية' },
+    { id: 'identity', t: 'الهوية المؤسسية والمراجع البصرية', r: pIdentity, g: 'المراجع والهوية' },
   ];
 
   let rendering = 'home';
@@ -260,7 +261,17 @@
   const refBanner = (what) => `<div class="note" style="margin-bottom:14px"><b>مرجعي:</b> ${what} أُعدّ لتصور مبنى جديد على أرض 50×50م، ويُعرض مرجعاً للبرنامج الوظيفي والمتطلبات. المشروع في مبنى قائم سيتم استئجاره وتجهيزه للاستخدام التعليمي، والمتطلبات النظامية في قسم <a href="#regulations">اشتراطات المباني التعليمية</a>.</div>`;
 
   const TAGLINE = 'صرح تعليمي يصنع جيلًا من المعرفة والتميّز، ويهيئ أبناءنا وبناتنا لمستقبل واعد.';
+  const HEADLINE = 'صرح تعليمي يصنع جيلًا من المعرفة والتميّز';
+  const MOTTO = 'نرتقي بالعلم وننمو بالمستقبل';
   const DESCRIPTION = 'مدارس أهلية في مدينة الرياض، تقدم التعليم بالمنهج الوطني للمرحلتين التمهيدية والابتدائية، ضمن بيئة تعليمية محفزة تجمع بين جودة التعليم وتنمية المهارات.';
+
+  /* واجهة الهوية: الاسم ← العبارة الرئيسية ← العبارة التعريفية ← بيانات المشروع ← الوصف */
+  const heroBlock = (line1, extra = '') => `<div class="hero hx">
+      <h1>مدارس سُلّم النمو <span class="en">Growth Ladder Schools</span></h1>
+      <p class="hx-l1">${esc(line1)}</p>
+      <p class="hx-l2">${esc(MOTTO)}</p>
+      <p class="hx-l3"><span>مجمع تعليمي</span><i aria-hidden="true">|</i><span>الرياض</span></p>
+      <p class="hx-desc">${esc(DESCRIPTION)}</p>${extra}</div>`;
 
   /* ---------- 1) الرئيسية ---------- */
   function pHome() {
@@ -273,12 +284,8 @@
       { label: 'الطاقة المقترحة', value: c.capProp, color: CH.C.saffron }], fmt: fInt, labelW: 200 }));
     draw('ch-home-seats', el => CH.combo(el, { cats: YRS, stacked: true, series: [
       { name: 'مقاعد التمهيدي', values: yrRow('23', 26), color: CH.C.saffron }, { name: 'مقاعد الابتدائي', values: yrRow('23', 27), color: CH.C.petrol }], fmt: fInt, tipFmt: v => fInt(v) + ' مقعد' }));
-    return `
-    <div class="hero">
-      <h1>مدارس سُلّم النمو <span class="en" style="font-weight:400;opacity:.8;font-size:.6em">Growth Ladder Schools</span></h1>
-      <p style="font-size:17px;color:#fff;font-weight:700;margin-bottom:6px">${esc(TAGLINE)}</p>
-      <p>${esc(DESCRIPTION)}</p>
-      <div class="meta"><span class="pill">نرتقي بالعلم، وننمو بالمستقبل</span><span class="pill">مجمع تعليمي</span><span class="pill">مبنى قائم مستأجر</span><span class="pill">الرياض</span></div></div>
+    return heroBlock(HEADLINE) + regGateway() + `
+    <div class="sect-l"><h2>المؤشرات الفنية الرئيسية</h2><span>من البرنامج المرجعي للدراسة – تُستبدل بقيم المبنى المختار بعد فحصه</span></div>
     <div class="grid g4">
       ${kpi({ label: 'العقارات المقيّمة', value: numSpan(fInt(P.n)), unit: 'عقار', foot: P.n ? `مناسب مبدئياً ${numSpan(fInt(P.ok))} · يحتاج معالجة ${numSpan(fInt(P.treat))} · غير مناسب ${numSpan(fInt(P.fail))} · غير مكتمل ${numSpan(fInt(P.miss))}` : 'لم يُضف أي عقار بعد – <a href="#property">معايير المباني التعليمية</a>', tone: 'acc' })}
       ${kpi({ label: 'الطاقة الاستيعابية المقترحة (المرجعية)', value: numSpan(fInt(c.capProp)), unit: 'طالب', foot: `تصميمية ${numSpan(fInt(c.capTheory))} · حسب الأرض ${numSpan(fInt(c.capLand))} · المعتمدة: ${c.capOff === null || c.capOff === '' ? 'لم تصدر' : fInt(c.capOff)}`, key: 'Cap_Proposed' })}
@@ -295,12 +302,7 @@
       ${chartBox('ch-home-seats', 'خطة الافتتاح التدريجي – المقاعد', 'المقاعد المتاحة حسب المرحلة لكل سنة (ورقة 23)')}
     </div>
     <div style="height:16px"></div>
-    <div class="grid g2">
-      <div class="card"><h3>ما يجب حسمه قبل القرار</h3><p class="sub">من ورقة «01أ الملاحظات الحرجة» – ${fInt(c.critOpen)} بنداً مفتوحاً</p>${critList(6)}<p style="margin:10px 0 0"><a href="#risks">عرض كل البنود الحرجة ←</a></p></div>
-      <div class="card"><h3>اشتراطات المباني التعليمية</h3><p class="sub">أبرز المتطلبات النظامية للمبنى في الرياض (الفئة أ)</p><ul class="list small">
-        <li>مبنى تعليمي مستقل (4.1 بند 3).</li><li>شارعان أحدهما بعرض 25 م على الأقل، أو ثلاثة شوارع أحدها 20 م (جدول 1).</li><li>الأدوار: الابتدائي حتى أرضي + 3، ورياض الأطفال حتى أرضي + 1 (جدول 4).</li><li>نصيب الطالب من الأرض: رياض الأطفال 5.00 م² والابتدائي 4.40 م² (جدول 3).</li><li>المواقف: موقفان لكل فصل ابتدائي، وموقف لكل 3 فصول تمهيدي، وموقف حافلة لكل 3 فصول (جدول 2).</li></ul>
-        <p style="margin:10px 0 0"><a class="btn pri" href="#regulations">اشتراطات المباني التعليمية ←</a></p></div>
-    </div>`;
+    <div class="card"><h3>ما يجب حسمه قبل القرار</h3><p class="sub">من ورقة «01أ الملاحظات الحرجة» – ${fInt(c.critOpen)} بنداً مفتوحاً</p><div class="crit-cols">${critList(6)}</div><p style="margin:10px 0 0"><a href="#risks">عرض كل البنود الحرجة ←</a></p></div>`;
   }
 
   function critRows() {
@@ -316,8 +318,7 @@
   function pSummary() {
     const si = SHEET['01'], items = [];
     for (let r = 3; r <= M.dims[si].r; r += 2) { const h = V('01', 'B' + r), t = V('01', 'B' + (r + 1)); if (h && t) items.push([h, t]); }
-    return head('القسم 2', 'الملخص التنفيذي', 'نص الملخص مرتبط بالنموذج ويتحدث تلقائياً مع المدخلات.') + `<div class="hero" style="margin-bottom:16px"><h1>مدارس سُلّم النمو <span class="en" style="font-weight:400;opacity:.8;font-size:.6em">Growth Ladder Schools</span></h1>
-        <p style="font-size:17px;color:#fff;font-weight:700;margin-bottom:6px">${esc(TAGLINE)}</p><p>${esc(DESCRIPTION)}</p></div>
+    return head('القسم 2', 'الملخص التنفيذي', 'نص الملخص مرتبط بالنموذج ويتحدث تلقائياً مع المدخلات.') + heroBlock(TAGLINE) + `
       <div class="card"><h3>التعريف بالمشروع</h3><div class="tbl-wrap"><table class="t"><tbody>
         <tr><th>اسم المشروع</th><td>مدارس سُلّم النمو</td></tr><tr><th>المدينة</th><td>الرياض</td></tr><tr><th>نوع المدرسة</th><td>أهلية بمنهج وطني</td></tr>
         <tr><th>المراحل التعليمية</th><td>التمهيدي والابتدائي</td></tr><tr><th>طبيعة العقار</th><td>مبنى قائم سيتم استئجاره وتجهيزه للاستخدام التعليمي</td></tr><tr><th>الجهة المقدمة للدراسة</th><td>شركة ميد للمقاولات</td></tr>
@@ -736,12 +737,60 @@
         <tr><th>السريان</th><td>يُعمل بها من تاريخ نفاذ نظام التعليم العام (المادة 25)</td></tr>
         <tr><th>الصفحة الرسمية</th><td><a href="https://www.uqn.gov.sa/decisions-and-regulations/4002248" target="_blank" rel="noopener">uqn.gov.sa/decisions-and-regulations/4002248</a></td></tr></tbody></table></div></div>`;
   }
+  /* بوابة الاشتراطات في الرئيسية: موقعها بعد الهوية مباشرة لأنها شرط الدخول قبل قرار الاستئجار */
+  const KEYREQ = [
+    [0, 'مبنى تعليمي مستقل', '4.1 بند 3'],
+    [1, 'شارعان أحدهما 25 م، أو ثلاثة أحدها 20 م', 'جدول (1)'],
+    [3, 'الأدوار: الابتدائي حتى أرضي + 3، ورياض الأطفال حتى أرضي + 1', 'جدول (4)'],
+    [2, 'نصيب الطالب من الأرض: رياض الأطفال 5.00 م² والابتدائي 4.40 م²', 'جدول (3)'],
+    [9, 'المواقف: موقفان لكل فصل ابتدائي، وموقف لكل 3 فصول تمهيدي، وموقف حافلة لكل 3 فصول', 'جدول (2)'],
+  ];
+  const natCount = k => REQS.filter(r => r[5] === k).length;
+  function regGateway() {
+    return `<section class="regx" aria-labelledby="regx-t">
+      <div class="regx-main">
+        <div class="regx-kick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>المتطلبات النظامية · قبل قرار الاستئجار</div>
+        <h2 id="regx-t">اشتراطات المباني التعليمية</h2>
+        <p>الاشتراطات النظامية والفنية للمباني التعليمية الخاصة في الرياض (الفئة أ)، مستخلصة من النصوص الرسمية، مع الجهة المختصة والمرجع ومدى انطباق كل متطلب على مبنى قائم سيتم استئجاره وتجهيزه للاستخدام التعليمي.</p>
+        <div class="regx-stats">
+          <div><b class="num">${fInt(REQS.length)}</b><span>متطلباً</span></div>
+          <div><b class="num">${fInt(TOPICS.length)}</b><span>موضوعاً</span></div>
+          <div class="m"><b class="num">${fInt(natCount('m'))}</b><span>إلزامي</span></div>
+          <div class="a"><b class="num">${fInt(natCount('a'))}</b><span>يتطلب موافقة جهة</span></div>
+          <div class="g"><b class="num">${fInt(natCount('g'))}</b><span>توجيهي / مسموح</span></div>
+        </div>
+        <div class="regx-act">
+          <a class="btn pri" href="#regulations">استعراض الاشتراطات كاملة ←</a>
+          <a class="btn" href="#property">فحص مبنى مرشح</a>
+          <a class="btn" href="#regulations/reg-refs">المراجع الرسمية</a>
+        </div>
+      </div>
+      <div class="regx-side">
+        <h3>أبرز ما يُفحص في المبنى قبل الاستئجار</h3>
+        <ol>${KEYREQ.map(([t, x, ref]) => `<li><a href="#regulations/${t}"><span>${esc(x)}</span><em>${esc(ref)}</em></a></li>`).join('')}</ol>
+        <div class="regx-refs">
+          <a href="#regulations/reg-refs"><b>وزارة البلديات والإسكان</b>اشتراطات المباني التعليمية الخاصة 1447هـ</a>
+          <a href="#regulations/reg-refs"><b>وزارة التعليم</b>اللائحة المنظمة للمؤسسات التعليمية الخاصة</a>
+        </div>
+      </div>
+    </section>`;
+  }
   function pRegulations() {
     const list = REQS.map((r, i) => ({ r, i })).filter(x => regTopic < 0 || x.r[0] === regTopic);
-    const cnt = k => REQS.filter(r => r[5] === k).length;
+    const cnt = natCount;
     const rows = list.map(({ r }) => `<tr><td class="small muted">${esc(TOPICS[r[0]])}</td><td>${esc(r[1])}</td><td class="small">${esc(r[7] || DOC[r[2]].e)}</td><td class="small">${refCell(r)}</td><td>${natTag(r[5])}</td><td class="small">${esc(r[6])}</td></tr>`).join('');
     return head('القسم 6', 'اشتراطات المباني التعليمية', 'المتطلبات النظامية المستخلصة من «اشتراطات المباني التعليمية الخاصة» (وزارة البلديات والإسكان) و«اللائحة المنظمة للمؤسسات التعليمية الخاصة» (وزارة التعليم)، مع مدى انطباق كل متطلب على مبنى قائم سيتم استئجاره وتجهيزه للاستخدام التعليمي في الرياض (الفئة أ).') +
-      officialRefsCard() + `<div style="height:16px"></div>
+      `<div class="regx-stats page no-print">
+          <div><b class="num">${fInt(REQS.length)}</b><span>متطلباً</span></div>
+          <div><b class="num">${fInt(TOPICS.length)}</b><span>موضوعاً</span></div>
+          <div class="m"><b class="num">${fInt(natCount('m'))}</b><span>إلزامي</span></div>
+          <div class="a"><b class="num">${fInt(natCount('a'))}</b><span>يتطلب موافقة جهة</span></div>
+          <div class="g"><b class="num">${fInt(natCount('g'))}</b><span>توجيهي / مسموح</span></div>
+        </div>
+      <div class="note info no-print" style="margin:14px 0 16px">المرجعان: <b>اشتراطات المباني التعليمية الخاصة 1447هـ</b> (وزارة البلديات والإسكان) و<b>اللائحة المنظمة للمؤسسات التعليمية الخاصة</b> (وزارة التعليم) – بيانات الإصدار والسريان في <a href="#regulations/reg-refs">المراجع الرسمية</a> أسفل هذه الصفحة. ولفحص مبنى مرشح مقابل هذه المتطلبات استخدم <a href="#property">معايير المباني التعليمية</a>.</div>
+      <div class="card no-print"><h3>موضوعات الاشتراطات</h3><p class="sub">اختر موضوعاً لعرض متطلباته في الجدول</p>
+        <div class="topic-map">${TOPICS.map((t, i) => { const n = REQS.filter(r => r[0] === i), m = n.filter(r => r[5] === 'm').length; return `<a href="#regulations/${i}" class="${regTopic === i ? 'on' : ''}"><b>${esc(t)}</b><span><span class="num">${fInt(n.length)}</span> متطلب${m ? ` · <span class="num">${fInt(m)}</span> إلزامي` : ''}</span></a>`; }).join('')}</div></div>
+      <div style="height:16px"></div>
       <div class="card"><h3>ملاحظات جوهرية للمشروع</h3><ul class="list small">
         <li><b>التصنيف الجغرافي:</b> الرياض ضمن <b>الفئة (أ)</b> (2.2، صفحة 9)، وعليها تُبنى معدلات مساحة الأرض والمواقف.</li>
         <li><b>المجمع التعليمي:</b> تعد المدرسة مجمعاً تعليمياً إذا احتوت مرحلتين دراسيتين أو أكثر <b>باستثناء مرحلتي الحضانة ورياض الأطفال</b> (2.1، صفحة 9)؛ فمدرسة تضم التمهيدي والابتدائي لا تُعد مجمعاً بهذا التعريف.</li>
@@ -749,10 +798,12 @@
         <li><b>استقلال المبنى:</b> يجب أن يكون المبنى التعليمي مستقلاً (4.1 بند 3، صفحة 14).</li>
         <li><b>مسار الترخيص لدى وزارة التعليم:</b> وثيقة التأهيل ثم الترخيص، ومن شروطه رخصة البلدية للنشاط والموقع وشهادة الدفاع المدني وتقرير المكتب الهندسي بالجاهزية والطاقة القصوى (اللائحة، المادتان 5 و6).</li></ul></div>
       <div style="height:16px"></div>
-      <div class="card"><h3>جدول الاشتراطات (${fInt(REQS.length)} متطلباً)</h3>
+      <div class="card" id="reg-table"><h3>جدول الاشتراطات (${regTopic < 0 ? fInt(REQS.length) + ' متطلباً' : esc(TOPICS[regTopic]) + ' – ' + fInt(list.length) + ' من ' + fInt(REQS.length)})</h3>
         <div class="legend" style="margin-bottom:10px"><b>طبيعة المتطلب:</b>${['m', 'a', 'g'].map(k => natTag(k) + ` <span class="small muted">${fInt(cnt(k))}</span>`).join(' ')}</div>
         <div class="tabs no-print"><button data-regtopic="-1" class="${regTopic < 0 ? 'on' : ''}">الكل</button>${TOPICS.map((t, i) => `<button data-regtopic="${i}" class="${regTopic === i ? 'on' : ''}">${esc(t)}</button>`).join('')}</div>
         <div class="tbl-wrap"><table class="t"><thead><tr><th>الموضوع</th><th>نص المتطلب أو مضمونه</th><th>الجهة المختصة</th><th>المرجع</th><th>الطبيعة</th><th>الانطباق على المبنى القائم المستأجر</th></tr></thead><tbody>${rows}</tbody></table></div></div>
+      <div style="height:16px"></div>
+      <div id="reg-refs" class="anchor-t"><h2 class="sect-h">المراجع الرسمية</h2>${officialRefsCard()}</div>
       <div style="height:16px"></div>
       <div class="card"><h3>الأدلة والأكواد المرجعية</h3><p class="sub">كما وردت في الباب الثامن (8.1، صفحة 28)</p><ol class="list small">
         <li>نظام إجراءات التراخيص البلدية ولائحته التنفيذية.</li><li>لائحة الجزاءات عن المخالفات البلدية.</li><li>الأنظمة واللوائح والقواعد التنفيذية والفنية الصادرة من وزارة البلديات والإسكان.</li><li>الدليل الإرشادي للوحات التجارية.</li><li>الدليل الإجرائي لدراسات التأثير المروري للمشاريع العمرانية (قرار 4500956243/1 وتاريخ 1447/2/18هـ).</li><li>نظام استخدام كاميرات المراقبة الأمنية ولائحته التنفيذية.</li><li>الدليل التنظيمي الصادر من الأمانة التي يقع النشاط داخل حدودها.</li><li>ضوابط الاستفادة من المرافق التعليمية وتعديل النوع والمرحلة التعليمية للمرافق التعليمية المملوكة للقطاع الخاص – وزارة التعليم.</li><li>الدليل الاسترشادي لمعايير تصميم المدارس الأهلية والعالمية – وزارة التعليم.</li><li>الأنظمة واللوائح الفنية الصادرة عن الهيئة السعودية للمواصفات والمقاييس والجودة.</li><li>الدليل الإرشادي للوصول الشامل في البيئة العمرانية – مركز الملك سلمان لأبحاث الإعاقة.</li><li>المتطلبات الوقائية للحماية من الحريق – الدفاع المدني.</li><li>كود البناء السعودي: SBC-201، SBC 301-306، SBC-401، SBC-501، SBC-601، SBC-701، SBC-801.</li></ol></div>`;
@@ -930,7 +981,7 @@
     }
   });
   document.addEventListener('click', e => {
-    const rt = e.target.closest('[data-regtopic]'); if (rt) { regTopic = +rt.dataset.regtopic; render(current, true); return; }
+    const rt = e.target.closest('[data-regtopic]'); if (rt) { regTopic = +rt.dataset.regtopic; history.replaceState(null, '', '#regulations' + (regTopic < 0 ? '' : '/' + regTopic)); render(current, true); return; }
     const t = e.target.closest('[data-pa]'); if (!t) return;
     const a = t.dataset.pa, l = PROP.list();
     if (a === 'add') { const p = newProp(); p.name = 'عقار ' + (l.length + 1); l.push(p); PROP.save(l); propOpen = p.id; }
@@ -969,17 +1020,24 @@
   /* ================= التوجيه والعرض ================= */
   let current = 'home';
   function nav() {
-    $('#nav').innerHTML = PAGES.map((p, i) => `<a href="#${p.id}" data-id="${p.id}" class="${p.id === current ? 'on' : ''}"><span class="n">${i + 1}</span>${esc(p.t)}</a>`).join('');
+    $('#nav').innerHTML = PAGES.map((p, i) => (i === 0 || PAGES[i - 1].g !== p.g ? `<div class="grp">${esc(p.g)}</div>` : '') +
+      `<a href="#${p.id}" data-id="${p.id}" class="${p.id === current ? 'on' : ''}${p.key ? ' key' : ''}"><span class="n">${i + 1}</span>${esc(p.t)}</a>`).join('');
   }
+  /* روابط فرعية: #regulations/3 تعرض موضوعاً محدداً، و#regulations/reg-refs تنتقل إلى عنصر داخل الصفحة */
   function render(id, keepScroll) {
-    const p = PAGES.find(x => x.id === id) || PAGES[0]; current = p.id; rendering = p.id;
+    const [pid, arg] = String(id || '').split('/');
+    const p = PAGES.find(x => x.id === pid) || PAGES[0]; current = p.id; rendering = p.id;
+    if (p.id === 'regulations' && arg !== undefined && /^\d+$/.test(arg) && +arg < TOPICS.length) regTopic = +arg;
     const y = scrollY; after.length = 0;
-    $('#page').innerHTML = p.r();
+    const i = PAGES.indexOf(p), prev = PAGES[i - 1], next = PAGES[i + 1];
+    $('#page').innerHTML = p.r() + `<nav class="pager no-print" aria-label="التنقل بين الأقسام">${prev ? `<a class="prev" href="#${prev.id}"><small>القسم السابق</small>${esc(prev.t)}</a>` : '<span></span>'}${next ? `<a class="next" href="#${next.id}"><small>القسم التالي</small>${esc(next.t)}</a>` : '<span></span>'}</nav>`;
     after.forEach(f => f());
     $('#crumb').innerHTML = `<button class="btn menu no-print" id="btn-menu" aria-label="القائمة">☰</button>${esc(p.t)}`;
     $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.id === p.id));
     document.title = p.t + ' – مدارس سُلّم النمو | دراسة الجدوى';
     if (keepScroll) scrollTo(0, y); else scrollTo(0, 0);
+    const tgt = arg && (/^\d+$/.test(arg) ? (p.id === 'regulations' ? 'reg-table' : '') : arg);
+    if (tgt && !keepScroll) { const el = document.getElementById(tgt); if (el) requestAnimationFrame(() => el.scrollIntoView({ block: 'start' })); }
   }
   function rerender() { render(current, true); if ($('#drawer').classList.contains('open')) { const b = $('#drawer .body'), st = b.scrollTop; openDrawer(); b.scrollTop = st; } updateChangedBadge(); }
 
@@ -1044,11 +1102,13 @@
   $('#scrim').addEventListener('click', closeDrawer);
   $('#lightbox').addEventListener('click', e => { if (e.target.tagName !== 'IMG') $('#lightbox').classList.remove('show'); });
   window.addEventListener('hashchange', () => render(location.hash.slice(1) || 'home'));
+  document.addEventListener('click', e => { const l = e.target.closest('a[href^="#"]'); if (l && l.getAttribute('href') === location.hash) { e.preventDefault(); render(location.hash.slice(1)); } });
 
   function showHelp() {
     modal(`<h3>كيف تستخدم الموقع</h3><ol class="list">
-      <li>ابدأ من <b>الرئيسية</b>: وضع المشروع وأهم المؤشرات الفنية.</li>
-      <li>افحص العقارات المرشحة للاستئجار في قسم <b>معايير المباني التعليمية</b>، وراجع المتطلبات النظامية في قسم <b>اشتراطات المباني التعليمية</b>.</li>
+      <li>ابدأ من <b>الرئيسية</b>: التعريف بالمشروع، وبوابة الاشتراطات النظامية، وأهم المؤشرات الفنية.</li>
+      <li>راجع المتطلبات النظامية في قسم <b>اشتراطات المباني التعليمية</b>، ثم افحص المباني المرشحة للاستئجار في قسم <b>معايير المباني التعليمية</b>.</li>
+      <li>القائمة مرتبة حسب أولوية القرار، وفي أسفل كل قسم رابطا <b>القسم السابق / التالي</b>.</li>
       <li>افتح <b>الافتراضات</b> لتعديل المدخلات الرئيسية، أو عدّل الخلايا الصفراء داخل جداول أي قسم. تتحدث كل الأرقام والرسوم فوراً.</li>
       <li>زر <b>؟</b> بجانب أي مؤشر يعرض معادلته الأصلية ومكانها في ملف الدراسة.</li>
       <li><b>حفظ / استعادة</b>: يحفظ التعديلات في هذا المتصفح فقط، ويمكن تصديرها ملفاً لنقلها لجهاز آخر.</li>
