@@ -3,8 +3,8 @@
 > انسخ هذا القسم إلى نهاية `PROJECT_CONTEXT.md` في حزمة المشروع، وحدّث صف المرحلة 5 في جدول «مراحل العمل المنجزة» إلى «منجزة». لم تُعدَّل أي ملفات أصلية في الحزمة.
 
 ## 11. المرحلة 5 – الموقع التفاعلي (9 نوفمبر 2026)
-- **المستودع:** `salmaam97-cpu/growth-ladder-schools` (عام)، والفرع `main`.
-- **الرابط بعد تفعيل GitHub Pages:** https://salmaam97-cpu.github.io/growth-ladder-schools/
+- **المستودع:** `made-construction/growth-ladder-schools` (عام)، والفرع `main`.
+- **الرابط بعد تفعيل GitHub Pages:** https://made-construction.github.io/growth-ladder-schools/
 - **المصدر:** `01_feasibility_excel/LATEST/الدراسة_الفنية_والهندسية_مدارس_سلم_النمو_v2.xlsx` (SHA-256 يبدأ بـ `59640839315ed251`)، دون أي تعديل عليه.
 - **الطريقة:**
   - `tools/xlsx2js.py` يترجم كل معادلات Excel (4,697 معادلة) إلى JavaScript في `assets/js/model.js`.
